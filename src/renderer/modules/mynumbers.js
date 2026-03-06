@@ -415,7 +415,9 @@ function renderMyNumbersList(items, containerId, type) {
           <span class="result-detail">${item.result.matchCount}개 일치${item.result.bonus ? " + 보너스" : ""}</span>
           <div class="result-win-numbers">
             당첨번호: ${item.result.winNumbers.map(n => `<span class="mini-ball ${ballColor(n)}">${n}</span>`).join("")}
+            <span class="bonus-separator">+</span>
             <span class="mini-ball bonus">${item.result.bonusNo}</span>
+            <span class="bonus-label">보너스</span>
           </div>
         `;
       } else {

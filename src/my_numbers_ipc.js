@@ -1,8 +1,32 @@
 const fs = require("fs");
 const path = require("path");
 const { app } = require("electron");
+const { EMBEDDED_DATA: LOTTO_EMBEDDED } = require("./analyzer");
+const { EMBEDDED_DATA: PENSION_EMBEDDED } = require("./pension_analyzer");
 
 const DATA_PATH = path.join(app.getPath("userData"), "my_numbers.json");
+const LOTTO_UPDATES_PATH = path.join(app.getPath("userData"), "updates.json");
+const PENSION_UPDATES_PATH = path.join(app.getPath("userData"), "pension_updates.json");
+
+// 로컬 당첨 이력에서 해당 회차 조회
+function findLottoRound(round) {
+  const all = [...LOTTO_EMBEDDED, ...loadJson(LOTTO_UPDATES_PATH)];
+  // r = [round, date, n1, n2, n3, n4, n5, n6, bonus]
+  return all.find(r => r[0] === round);
+}
+
+function findPensionRound(round) {
+  const all = [...PENSION_EMBEDDED, ...loadJson(PENSION_UPDATES_PATH)];
+  // r = [round, date, group, d1, d2, d3, d4, d5, d6, bonus]
+  return all.find(r => r[0] === round);
+}
+
+function loadJson(filePath) {
+  try {
+    if (fs.existsSync(filePath)) return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  } catch { /* ignore */ }
+  return [];
+}
 
 function loadMyNumbers() {
   try {
@@ -108,7 +132,7 @@ function setupMyNumbersIpc(ipcMain) {
     }
   });
 
-  // 로또 당첨 확인
+  // 로또 당첨 확인 (로컬 데이터 기반)
   ipcMain.handle("my-numbers-check-lotto", async (_event, id) => {
     try {
       const data = loadMyNumbers();
@@ -116,38 +140,30 @@ function setupMyNumbersIpc(ipcMain) {
       if (!entry) return { error: "해당 번호를 찾을 수 없습니다." };
       if (entry.type !== "lotto") return { error: "로또 번호가 아닙니다." };
 
-      // API 호출로 해당 회차 당첨번호 조회
-      const url = `https://www.dhlottery.co.kr/common.do?method=getLottoNumber&drwNo=${entry.round}`;
-      const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
-      const json = await resp.json();
-
-      if (json.returnValue !== "success") {
-        return { error: `${entry.round}회차 추첨 결과가 아직 없습니다.` };
+      const record = findLottoRound(entry.round);
+      if (!record) {
+        return { error: `${entry.round}회차 당첨 데이터가 없습니다. 데이터 업데이트 후 다시 시도해 주세요.` };
       }
 
-      const winNumbers = [
-        json.drwtNo1, json.drwtNo2, json.drwtNo3,
-        json.drwtNo4, json.drwtNo5, json.drwtNo6,
-      ].sort((a, b) => a - b);
-      const bonusNo = json.bnusNo;
+      // record = [round, date, n1, n2, n3, n4, n5, n6, bonus]
+      const winNumbers = [record[2], record[3], record[4], record[5], record[6], record[7]].sort((a, b) => a - b);
+      const bonusNo = record[8];
 
       const result = checkLottoResult(entry.numbers, winNumbers, bonusNo);
       result.winNumbers = winNumbers;
       result.bonusNo = bonusNo;
-      result.drawDate = json.drwNoDate;
+      result.drawDate = record[1];
 
-      // 결과 저장
       entry.result = result;
       saveMyNumbers(data);
 
       return { success: true, result };
     } catch (e) {
-      if (e.name === "TimeoutError") return { error: "서버 응답 시간 초과" };
       return { error: `당첨 확인 실패: ${e.message}` };
     }
   });
 
-  // 연금복권 당첨 확인
+  // 연금복권 당첨 확인 (로컬 데이터 기반)
   ipcMain.handle("my-numbers-check-pension", async (_event, id) => {
     try {
       const data = loadMyNumbers();
@@ -155,41 +171,25 @@ function setupMyNumbersIpc(ipcMain) {
       if (!entry) return { error: "해당 번호를 찾을 수 없습니다." };
       if (entry.type !== "pension") return { error: "연금복권 번호가 아닙니다." };
 
-      const url = `https://www.dhlottery.co.kr/pt720/selectPstPt720Info.do?srchPsltEpsd=${entry.round}`;
-      const resp = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-          "Referer": "https://www.dhlottery.co.kr/pt720/result",
-        },
-        signal: AbortSignal.timeout(10000),
-      });
-      const json = await resp.json();
-
-      if (!json.data || !json.data.result || json.data.result.length === 0) {
-        return { error: `${entry.round}회차 추첨 결과가 아직 없습니다.` };
+      const record = findPensionRound(entry.round);
+      if (!record) {
+        return { error: `${entry.round}회차 당첨 데이터가 없습니다. 데이터 업데이트 후 다시 시도해 주세요.` };
       }
 
-      // 1등 당첨번호 찾기
-      const firstPrize = json.data.result.find(r => r.wnSqNo === 1);
-      if (!firstPrize) {
-        return { error: `${entry.round}회차 1등 당첨번호를 찾을 수 없습니다.` };
-      }
-
-      const winGroup = parseInt(firstPrize.wnBndNo);
-      const winDigits = firstPrize.wnRnkVl.padStart(6, "0").split("").map(Number);
+      // record = [round, date, group, d1, d2, d3, d4, d5, d6, bonus]
+      const winGroup = record[2];
+      const winDigits = [record[3], record[4], record[5], record[6], record[7], record[8]];
 
       const result = checkPensionResult(entry.group, entry.digits, winGroup, winDigits);
       result.winGroup = winGroup;
       result.winDigits = winDigits;
-      result.drawDate = firstPrize.psltRflYmd;
+      result.drawDate = record[1];
 
-      // 결과 저장
       entry.result = result;
       saveMyNumbers(data);
 
       return { success: true, result };
     } catch (e) {
-      if (e.name === "TimeoutError") return { error: "서버 응답 시간 초과" };
       return { error: `당첨 확인 실패: ${e.message}` };
     }
   });
