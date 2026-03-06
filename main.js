@@ -116,7 +116,7 @@ setupIpc(ipcMain, () => mainWindow);
 // ── 트레이 생성 ──
 function createTray() {
   const iconPath = app.isPackaged
-    ? path.join(process.resourcesPath, "tray-icon.png")
+    ? path.join(process.resourcesPath, "assets", "tray-icon.png")
     : path.join(__dirname, "assets", "tray-icon.png");
   const icon = nativeImage.createFromPath(iconPath);
 

@@ -40,7 +40,7 @@ async function main() {
     <rect width="${sideW}" height="${sideH}" fill="url(#sbg)"/>
     <text x="${sideW/2}" y="240" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="16" font-weight="700" fill="#dbdee1">로또 추천기</text>
     <text x="${sideW/2}" y="262" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="11" fill="#949ba4">Lotto Recommender</text>
-    <text x="${sideW/2}" y="290" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" fill="#6d6f78">v2.3.0</text>
+    <text x="${sideW/2}" y="290" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" fill="#6d6f78">v2.3.1</text>
   </svg>`;
 
   const sidebarBase = await sharp(Buffer.from(sidebarSvg)).png().toBuffer();
