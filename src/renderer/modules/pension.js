@@ -7,6 +7,21 @@ import { showToast, fmt } from "./utils.js";
 
 const POS_LABELS = ["조", "1번째", "2번째", "3번째", "4번째", "5번째", "6번째"];
 
+function formatDate(d) {
+  if (!d) return "";
+  const s = d.replace(/-/g, "");
+  if (s.length === 8) return `${s.slice(0, 4)}.${s.slice(4, 6)}.${s.slice(6, 8)}`;
+  return d;
+}
+
+export function updatePensionSidebarInfo() {
+  const el = document.getElementById("pension-sidebar-info");
+  if (el && state.pensionSummary) {
+    const p = state.pensionSummary;
+    el.innerHTML = `<b>연금복권</b> ${fmt(p.total)}회차<br>${formatDate(p.dateRange.from)} ~ ${formatDate(p.dateRange.to)}`;
+  }
+}
+
 function createDigitBox(digit, pos, sizeClass = "", delay = 0) {
   const el = document.createElement("span");
   const posClass = pos === 0 ? "group" : `pos-${pos}`;
@@ -294,6 +309,9 @@ export async function initPension() {
   }
 
   state.pensionSummary = result.summary;
+
+  // 사이드바 데이터 정보 업데이트
+  updatePensionSidebarInfo();
 
   // 버튼 활성화
   document.getElementById("btn-pension-top5").disabled = false;

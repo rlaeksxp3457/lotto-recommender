@@ -2,10 +2,21 @@ import { showToast, fmt } from "./utils.js";
 import { state } from "./state.js";
 import { renderFrequencyChart, renderInsights } from "./charts.js";
 import { renderNeverDrawnInfo } from "./neverdrawn.js";
+import { renderPensionFreqChart, renderPensionStats, updatePensionSidebarInfo } from "./pension.js";
+
+function formatDate(d) {
+  if (!d) return "";
+  const s = d.replace(/-/g, "");
+  if (s.length === 8) return `${s.slice(0, 4)}.${s.slice(4, 6)}.${s.slice(6, 8)}`;
+  return d;
+}
 
 export function updateDataInfo() {
-  document.getElementById("data-info").innerHTML =
-    `${fmt(state.summary.total)}회차 로드<br>${state.summary.dateRange.from} ~ ${state.summary.dateRange.to}`;
+  const el = document.getElementById("data-info");
+  if (state.summary) {
+    const s = state.summary;
+    el.innerHTML = `<b>로또 6/45</b> ${fmt(s.total)}회차<br>${formatDate(s.dateRange.from)} ~ ${formatDate(s.dateRange.to)}`;
+  }
 }
 
 export function initUpdate() {
@@ -32,12 +43,14 @@ export function initUpdate() {
     if (progressEl) progressEl.textContent = msg;
   });
 
-  // 온라인 업데이트
-  document.getElementById("btn-online-update").addEventListener("click", async () => {
-    dropdownWrap.classList.remove("open");
-    dropdownMenu.classList.add("hidden");
-    updateBtn.classList.add("loading");
+  // 연금복권 업데이트 진행률 수신
+  window.api.onPensionUpdateProgress((msg) => {
+    const progressEl = document.getElementById("update-progress");
+    if (progressEl) progressEl.textContent = msg;
+  });
 
+  // 진행률 표시 헬퍼
+  function showProgress(text) {
     let progressEl = document.getElementById("update-progress");
     if (!progressEl) {
       progressEl = document.createElement("div");
@@ -45,8 +58,18 @@ export function initUpdate() {
       progressEl.className = "update-progress";
       updateBtn.parentElement.appendChild(progressEl);
     }
-    progressEl.textContent = "업데이트 확인 중...";
+    progressEl.textContent = text;
     progressEl.style.display = "block";
+    return progressEl;
+  }
+
+  // 로또 6/45 온라인 업데이트
+  document.getElementById("btn-online-update").addEventListener("click", async () => {
+    dropdownWrap.classList.remove("open");
+    dropdownMenu.classList.add("hidden");
+    updateBtn.classList.add("loading");
+
+    const progressEl = showProgress("로또 6/45 업데이트 확인 중...");
 
     try {
       const result = await window.api.updateData();
@@ -63,6 +86,33 @@ export function initUpdate() {
         showToast(result.message, "success");
       }
     } catch { showToast("업데이트 실패: 네트워크 오류", "error"); }
+
+    updateBtn.classList.remove("loading");
+    progressEl.style.display = "none";
+  });
+
+  // 연금복권720+ 온라인 업데이트
+  document.getElementById("btn-pension-update").addEventListener("click", async () => {
+    dropdownWrap.classList.remove("open");
+    dropdownMenu.classList.add("hidden");
+    updateBtn.classList.add("loading");
+
+    const progressEl = showProgress("연금복권720+ 업데이트 확인 중...");
+
+    try {
+      const result = await window.api.pensionUpdateData();
+      if (result.error) {
+        showToast(result.error, "error");
+      } else if (result.updated === 0) {
+        showToast(result.message, "info");
+      } else {
+        state.pensionSummary = result.summary;
+        updatePensionSidebarInfo();
+        renderPensionFreqChart();
+        renderPensionStats();
+        showToast(`연금복권 ${result.message}`, "success");
+      }
+    } catch { showToast("연금복권 업데이트 실패: 네트워크 오류", "error"); }
 
     updateBtn.classList.remove("loading");
     progressEl.style.display = "none";
