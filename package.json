@@ -61,6 +61,7 @@
       "main.js",
       "preload.js",
       "src/**/*",
+      "assets/icon.ico",
       "!src/renderer/**/*.map",
       "!backtest.js",
       "!lotto_analyzer.*",

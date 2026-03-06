@@ -18,6 +18,7 @@ function createWindow() {
     minWidth: 960,
     minHeight: 700,
     title: "로또 추천기",
+    icon: path.join(__dirname, "assets", "icon.ico"),
     backgroundColor: "#1e1f22",
     show: false,
     frame: false,
