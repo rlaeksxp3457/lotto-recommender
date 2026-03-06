@@ -30,7 +30,10 @@
         }
       ],
       "icon": null,
-      "signAndEditExecutable": false
+      "signtoolOptions": {
+        "sign": "./scripts/sign.js"
+      },
+      "signAndEditExecutable": true
     },
     "nsis": {
       "oneClick": false,
