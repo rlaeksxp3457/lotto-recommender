@@ -1667,7 +1667,225 @@ body {
   border-radius: 5px;
 }
 
-/* 반응형 */
+/* ─── 연금복권 통계 그리드: single (1열) ─── */
+.pension-stats-grid.single {
+  grid-template-columns: 1fr;
+}
+
+/* ─── 연금복권 당첨 이력 테이블 ─── */
+.pension-history-wrap {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-dark);
+}
+
+.pension-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.pension-history-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.pension-history-table th {
+  background: var(--bg-darkest);
+  color: var(--text-bright);
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.pension-history-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.pension-history-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.pension-history-table tbody tr:nth-child(even) {
+  background: rgba(0,0,0,0.1);
+}
+
+.pension-history-table tbody tr:nth-child(even):hover {
+  background: var(--bg-hover);
+}
+
+.history-round {
+  font-weight: 600;
+  color: var(--text-bright);
+  white-space: nowrap;
+}
+
+.history-date {
+  color: var(--text-dim);
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.history-numbers .pension-rec-digits {
+  gap: 3px;
+}
+
+.history-bonus {
+  font-family: 'Consolas', 'Courier New', monospace;
+  color: var(--text-dim);
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.pension-digit.history-size {
+  width: 22px;
+  height: 26px;
+  font-size: 11px;
+  border-radius: 4px;
+}
+
+.pension-digit.history-size.group {
+  width: 32px;
+}
+
+.loading-text {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* ─── 인접쌍 빈도 Top 10 ─── */
+.pension-pair-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+}
+
+.pension-pair-label {
+  min-width: 140px;
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.pension-pair-label .pair-pos {
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
+.pension-pair-label b {
+  display: inline-block;
+  background: var(--bg-lighter);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 13px;
+  color: var(--text-bright);
+  margin: 0 1px;
+}
+
+.pension-pair-bar-track {
+  flex: 1;
+  height: 20px;
+  background: var(--bg-lighter);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pension-pair-bar-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #5865f2, #7289da);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.pension-pair-bar-count {
+  min-width: 40px;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+/* ─── 자릿수 합계 분포 ─── */
+.pension-sum-info {
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: var(--bg-lighter);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.pension-sum-info b {
+  color: var(--text-bright);
+}
+
+.pension-sum-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 160px;
+  padding: 0 4px;
+  overflow-x: auto;
+}
+
+.pension-sum-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 16px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.pension-sum-bar {
+  width: 100%;
+  min-height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  opacity: 0.7;
+  transition: height 0.4s ease, opacity 0.3s;
+}
+
+.pension-sum-bar.highlight {
+  background: var(--green);
+  opacity: 1;
+}
+
+.pension-sum-col:hover .pension-sum-bar {
+  opacity: 1;
+}
+
+.pension-sum-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.pension-sum-count {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-bottom: 2px;
+  min-height: 12px;
+}
+
+/* ─── 조 분포 래퍼 ─── */
+.pension-group-dist-wrap {
+  max-width: 600px;
+}
+
+/* ─── 반응형 ─── */
 @media (max-width: 1100px) {
   .pension-freq-grid {
     grid-template-columns: repeat(4, 1fr);

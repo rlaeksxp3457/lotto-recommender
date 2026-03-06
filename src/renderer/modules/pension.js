@@ -299,6 +299,162 @@ export function renderPensionStats() {
   `;
 }
 
+// ─── 당첨 이력 테이블 ───
+
+export async function renderPensionHistory() {
+  const container = document.getElementById("pension-history");
+  if (!container) return;
+  container.innerHTML = '<div class="loading-text">당첨 이력 불러오는 중...</div>';
+
+  const result = await window.api.pensionGetHistory(50);
+  container.innerHTML = "";
+
+  if (result.error) {
+    container.innerHTML = `<div class="loading-text">${result.error}</div>`;
+    return;
+  }
+
+  const table = document.createElement("table");
+  table.className = "pension-history-table";
+
+  const thead = document.createElement("thead");
+  thead.innerHTML = `<tr>
+    <th>회차</th>
+    <th>추첨일</th>
+    <th>당첨번호</th>
+    <th>보너스</th>
+  </tr>`;
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  for (const rec of result.records) {
+    const tr = document.createElement("tr");
+
+    const tdRound = document.createElement("td");
+    tdRound.className = "history-round";
+    tdRound.textContent = `${rec.round}회`;
+
+    const tdDate = document.createElement("td");
+    tdDate.className = "history-date";
+    tdDate.textContent = formatDate(rec.date);
+
+    const tdNum = document.createElement("td");
+    tdNum.className = "history-numbers";
+    const numDisplay = createNumberDisplay(rec.group, rec.digits, "history-size");
+    tdNum.appendChild(numDisplay);
+
+    const tdBonus = document.createElement("td");
+    tdBonus.className = "history-bonus";
+    tdBonus.textContent = rec.bonus;
+
+    tr.appendChild(tdRound);
+    tr.appendChild(tdDate);
+    tr.appendChild(tdNum);
+    tr.appendChild(tdBonus);
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+}
+
+// ─── 인접쌍 빈도 Top 10 ───
+
+export function renderPensionAdjacentPairs() {
+  const summary = state.pensionSummary;
+  if (!summary || !summary.adjacentPairTop) return;
+
+  const container = document.getElementById("pension-adjacent-pairs");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const pairs = summary.adjacentPairTop;
+  const maxCount = pairs.length > 0 ? pairs[0].count : 1;
+
+  pairs.forEach(({ label, d1, d2, count }, idx) => {
+    const row = document.createElement("div");
+    row.className = "pension-pair-bar-wrap";
+
+    const labelEl = document.createElement("span");
+    labelEl.className = "pension-pair-label";
+    labelEl.innerHTML = `<span class="pair-pos">${label}</span> <b>${d1}</b>-<b>${d2}</b>`;
+
+    const track = document.createElement("div");
+    track.className = "pension-pair-bar-track";
+
+    const fill = document.createElement("div");
+    fill.className = "pension-pair-bar-fill";
+    fill.style.width = `${(count / maxCount) * 100}%`;
+    fill.style.animationDelay = `${idx * 50}ms`;
+
+    const countEl = document.createElement("span");
+    countEl.className = "pension-pair-bar-count";
+    countEl.textContent = `${count}회`;
+
+    track.appendChild(fill);
+    row.appendChild(labelEl);
+    row.appendChild(track);
+    row.appendChild(countEl);
+    container.appendChild(row);
+  });
+}
+
+// ─── 자릿수 합계 분포 ───
+
+export function renderPensionDigitSumDist() {
+  const summary = state.pensionSummary;
+  if (!summary || !summary.digitSumDist) return;
+
+  const container = document.getElementById("pension-digit-sum");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const dist = summary.digitSumDist;
+  const maxCount = Math.max(...dist.map(d => d.count));
+  const totalRecords = dist.reduce((a, d) => a + d.count, 0);
+
+  // 평균 합계 계산
+  const avgSum = dist.reduce((acc, d) => acc + d.sum * d.count, 0) / totalRecords;
+
+  const infoEl = document.createElement("div");
+  infoEl.className = "pension-sum-info";
+  infoEl.innerHTML = `평균 합계: <b>${avgSum.toFixed(1)}</b> | 범위: <b>${dist[0].sum}</b> ~ <b>${dist[dist.length - 1].sum}</b>`;
+  container.appendChild(infoEl);
+
+  const chartWrap = document.createElement("div");
+  chartWrap.className = "pension-sum-chart";
+
+  dist.forEach(({ sum, count }) => {
+    const col = document.createElement("div");
+    col.className = "pension-sum-col";
+
+    const bar = document.createElement("div");
+    bar.className = "pension-sum-bar";
+    const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
+    bar.style.height = `${pct}%`;
+
+    // 평균에 가까운 구간 강조
+    if (Math.abs(sum - avgSum) <= 3) {
+      bar.classList.add("highlight");
+    }
+
+    const label = document.createElement("span");
+    label.className = "pension-sum-label";
+    label.textContent = sum;
+
+    const countEl = document.createElement("span");
+    countEl.className = "pension-sum-count";
+    countEl.textContent = count > 0 ? count : "";
+
+    col.appendChild(countEl);
+    col.appendChild(bar);
+    col.appendChild(label);
+    chartWrap.appendChild(col);
+  });
+
+  container.appendChild(chartWrap);
+}
+
 // ─── 초기화 ───
 
 export async function initPension() {
@@ -320,6 +476,11 @@ export async function initPension() {
   // 차트 & 통계 렌더
   renderPensionFreqChart();
   renderPensionStats();
+  renderPensionAdjacentPairs();
+  renderPensionDigitSumDist();
+
+  // 당첨 이력 렌더
+  await renderPensionHistory();
 
   // 초기 추천 생성
   await generatePensionTop5();

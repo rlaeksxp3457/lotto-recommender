@@ -75,7 +75,9 @@ function setupAutoUpdater() {
       mainWindow?.webContents.send("app-update", { type: "downloaded" });
     });
 
-    autoUpdater.on("error", () => {});
+    autoUpdater.on("error", (err) => {
+      mainWindow?.webContents.send("app-update", { type: "error", message: err?.message || "알 수 없는 오류" });
+    });
 
     ipcMain.handle("check-for-update", async () => {
       try {

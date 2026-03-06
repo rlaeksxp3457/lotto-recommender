@@ -2,7 +2,10 @@ import { showToast, fmt } from "./utils.js";
 import { state } from "./state.js";
 import { renderFrequencyChart, renderInsights } from "./charts.js";
 import { renderNeverDrawnInfo } from "./neverdrawn.js";
-import { renderPensionFreqChart, renderPensionStats, updatePensionSidebarInfo } from "./pension.js";
+import {
+  renderPensionFreqChart, renderPensionStats, updatePensionSidebarInfo,
+  renderPensionHistory, renderPensionAdjacentPairs, renderPensionDigitSumDist,
+} from "./pension.js";
 
 function formatDate(d) {
   if (!d) return "";
@@ -110,6 +113,9 @@ export function initUpdate() {
         updatePensionSidebarInfo();
         renderPensionFreqChart();
         renderPensionStats();
+        renderPensionAdjacentPairs();
+        renderPensionDigitSumDist();
+        renderPensionHistory();
         showToast(`연금복권 ${result.message}`, "success");
       }
     } catch { showToast("연금복권 업데이트 실패: 네트워크 오류", "error"); }
@@ -165,6 +171,9 @@ function initAppUpdate() {
         if (pctEl) pctEl.textContent = data.percent;
         break;
       }
+      case "error":
+        console.warn("[auto-update]", data.message);
+        break;
       case "downloaded":
         banner.innerHTML = `
           <span>업데이트 다운로드 완료!</span>

@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld("api", {
   pensionInitData:           ()      => ipcRenderer.invoke("pension-init-data"),
   pensionGetRecommendations: (count) => ipcRenderer.invoke("pension-get-recommendations", count),
   pensionGetTop5:            ()      => ipcRenderer.invoke("pension-get-top5"),
+  pensionGetHistory:         (count) => ipcRenderer.invoke("pension-get-history", count),
   pensionUpdateData:         ()      => ipcRenderer.invoke("pension-update-data"),
   onPensionUpdateProgress:   (cb)    => ipcRenderer.on("pension-update-progress", (_e, msg) => cb(msg)),
 

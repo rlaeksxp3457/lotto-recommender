@@ -4,6 +4,7 @@ const { app } = require("electron");
 const {
   getRecords, PensionStats,
   getPensionRecommendations, getPensionTop5,
+  getRecentRecords,
   EMBEDDED_DATA,
 } = require("./pension_analyzer");
 
@@ -60,6 +61,15 @@ function setupPensionIpc(ipcMain, getWindow) {
       return { recommendations: getPensionRecommendations(stats, count || 1) };
     } catch (e) {
       return { error: `추천 생성 실패: ${e.message}` };
+    }
+  });
+
+  ipcMain.handle("pension-get-history", async (_event, count) => {
+    if (!stats) return { error: "연금복권 데이터가 로드되지 않았습니다." };
+    try {
+      return { records: getRecentRecords(stats.records, count || 50) };
+    } catch (e) {
+      return { error: `이력 조회 실패: ${e.message}` };
     }
   });
 

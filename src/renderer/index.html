@@ -96,9 +96,21 @@
 
       <div class="sidebar-section-label">연금복권</div>
       <nav class="sidebar-nav">
-        <button class="nav-item" data-tab="pension" id="nav-pension">
+        <button class="nav-item" data-tab="pension-recommend" id="nav-pension-recommend">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
-          연금복권720+
+          번호 추천
+        </button>
+        <button class="nav-item" data-tab="pension-history" id="nav-pension-history">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+          당첨 이력
+        </button>
+        <button class="nav-item" data-tab="pension-frequency" id="nav-pension-frequency">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/></svg>
+          빈도 분석
+        </button>
+        <button class="nav-item" data-tab="pension-pattern" id="nav-pension-pattern">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+          패턴 분석
         </button>
       </nav>
 
@@ -237,9 +249,8 @@
         </div>
       </section>
 
-      <!-- 탭: 연금복권720+ -->
-      <section id="tab-pension" class="tab-content">
-        <!-- TOP 5 추천 -->
+      <!-- 탭: 연금복권 번호 추천 -->
+      <section id="tab-pension-recommend" class="tab-content">
         <div class="pension-top-section">
           <div class="pension-top-header">
             <div class="pension-top-title-row">
@@ -271,21 +282,48 @@
           </div>
         </div>
         <div id="pension-recommendations" class="card-grid"></div>
+      </section>
 
-        <div class="section-divider"><span>위치별 빈도 분석</span></div>
+      <!-- 탭: 연금복권 당첨 이력 -->
+      <section id="tab-pension-history" class="tab-content">
+        <div class="content-header">
+          <h2>당첨 이력</h2>
+          <p class="content-desc">최근 50회 연금복권720+ 1등 당첨번호</p>
+        </div>
+        <div id="pension-history" class="pension-history-wrap"></div>
+      </section>
 
+      <!-- 탭: 연금복권 빈도 분석 -->
+      <section id="tab-pension-frequency" class="tab-content">
         <div class="content-header">
           <h2>위치별 숫자 빈도</h2>
           <p class="content-desc">각 자릿수별 출현 빈도 (조 + 6자리)</p>
         </div>
         <div id="pension-freq-chart" class="pension-freq-grid"></div>
 
-        <div class="section-divider"><span>통계 분석</span></div>
+        <div class="section-divider"><span>조 분포</span></div>
+        <div class="content-header">
+          <h2>조별 당첨 분포</h2>
+          <p class="content-desc">1조~5조 당첨 횟수 비교</p>
+        </div>
+        <div id="pension-group-dist" class="pension-group-dist-wrap"></div>
+      </section>
 
+      <!-- 탭: 연금복권 패턴 분석 -->
+      <section id="tab-pension-pattern" class="tab-content">
+        <div class="content-header">
+          <h2>패턴 분석</h2>
+          <p class="content-desc">위치별 핫/콜드, 인접쌍 패턴, 자릿수 합계 분석</p>
+        </div>
         <div class="pension-stats-grid">
-          <div class="card"><h3>조 분포</h3><div id="pension-group-dist"></div></div>
           <div class="card"><h3>위치별 핫 숫자</h3><div id="pension-hot"></div></div>
           <div class="card"><h3>위치별 콜드 숫자</h3><div id="pension-cold"></div></div>
+          <div class="card"><h3>인접 위치 쌍 빈도 Top 10</h3><div id="pension-adjacent-pairs"></div></div>
+          <div class="card"><h3>자릿수 합계 분포</h3><div id="pension-digit-sum"></div></div>
+        </div>
+
+        <div class="section-divider"><span>데이터 정보</span></div>
+        <div class="pension-stats-grid single">
           <div class="card"><h3>데이터 정보</h3><div id="pension-data-info"></div></div>
         </div>
       </section>

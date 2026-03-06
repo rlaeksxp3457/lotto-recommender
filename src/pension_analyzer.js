@@ -131,6 +131,45 @@ class PensionStats {
       .slice(0, n);
   }
 
+  // 인접쌍 빈도 상위 N개 (전체 위치쌍 통합)
+  getAdjacentPairTop(n = 10) {
+    const POS_LABELS = ["1번째", "2번째", "3번째", "4번째", "5번째", "6번째"];
+    const all = [];
+    for (let i = 0; i < 5; i++) {
+      const map = this.adjacentPairFreq[i];
+      for (const [key, count] of map.entries()) {
+        const [d1, d2] = key.split(",").map(Number);
+        all.push({
+          pos1: i, pos2: i + 1,
+          label: `${POS_LABELS[i]}-${POS_LABELS[i + 1]}`,
+          d1, d2, count,
+        });
+      }
+    }
+    all.sort((a, b) => b.count - a.count);
+    return all.slice(0, n);
+  }
+
+  // 자릿수 합계 분포 (6자리 합: 0~54)
+  getDigitSumDist() {
+    const dist = new Array(55).fill(0);
+    for (const r of this.records) {
+      const sum = r.digits.reduce((a, b) => a + b, 0);
+      dist[sum]++;
+    }
+    // 빈 구간 제거하고 의미있는 범위만 반환
+    let minSum = dist.findIndex(v => v > 0);
+    let maxSum = 54;
+    while (maxSum > 0 && dist[maxSum] === 0) maxSum--;
+    if (minSum < 0) minSum = 0;
+
+    const result = [];
+    for (let s = minSum; s <= maxSum; s++) {
+      result.push({ sum: s, count: dist[s] });
+    }
+    return result;
+  }
+
   getSummary() {
     const lastRec = this.records[this.records.length - 1];
     return {
@@ -170,6 +209,10 @@ class PensionStats {
         digits: lastRec.digits,
         bonus: lastRec.bonus,
       },
+      // 인접쌍 빈도 Top 10
+      adjacentPairTop: this.getAdjacentPairTop(10),
+      // 자릿수 합계 분포
+      digitSumDist: this.getDigitSumDist(),
     };
   }
 }
@@ -416,10 +459,23 @@ function getPensionTop5(stats) {
   return results;
 }
 
+// ─── 최근 기록 조회 ───
+
+function getRecentRecords(records, n = 50) {
+  return records.slice(-n).reverse().map(r => ({
+    round: r.round,
+    date: r.date,
+    group: r.group,
+    digits: r.digits,
+    bonus: r.bonus,
+  }));
+}
+
 module.exports = {
   getRecords,
   PensionStats,
   getPensionRecommendations,
   getPensionTop5,
+  getRecentRecords,
   EMBEDDED_DATA,
 };
