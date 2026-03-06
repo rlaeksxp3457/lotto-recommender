@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require("electron");
 const path = require("path");
 const { setupIpc } = require("./src/ipc");
 
@@ -7,6 +7,7 @@ const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) { app.quit(); }
 
 let mainWindow = null;
+let tray = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -43,7 +44,8 @@ ipcMain.handle("window-maximize", () => {
   if (mainWindow?.isMaximized()) mainWindow.unmaximize();
   else mainWindow?.maximize();
 });
-ipcMain.handle("window-close", () => mainWindow?.close());
+ipcMain.handle("window-close", () => { app.isQuitting = true; app.quit(); });
+ipcMain.handle("window-hide", () => mainWindow?.hide());
 ipcMain.handle("window-is-maximized", () => mainWindow?.isMaximized() ?? false);
 
 // ── 앱 버전 ──
@@ -111,13 +113,42 @@ const updater = setupAutoUpdater();
 // ── IPC 핸들러 등록 ──
 setupIpc(ipcMain, () => mainWindow);
 
+// ── 트레이 생성 ──
+function createTray() {
+  // 16x16 간단한 아이콘 (파란 원)
+  const icon = nativeImage.createFromDataURL(
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAYklEQVR42mNkYPj/n4EKgJGJipoGMDExUdMABkZGagcBI+OA+YCRcWB9QG0XMDIyDogPGBkH1gcMDAwDYwBIE9V9gOoCahuAYgA17KS6C6jtA2q7AMMFVPcBtV1ADTcMAACR+TAR/bMFjQAAAABJRU5ErkJggg=="
+  );
+
+  tray = new Tray(icon);
+  tray.setToolTip("로또 추천기");
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: "열기", click: () => { mainWindow?.show(); mainWindow?.focus(); } },
+    { type: "separator" },
+    { label: "종료", click: () => { app.isQuitting = true; app.quit(); } },
+  ]));
+  tray.on("double-click", () => { mainWindow?.show(); mainWindow?.focus(); });
+}
+
 // ── 앱 시작 ──
 app.whenReady().then(() => {
   createWindow();
+  createTray();
+
+  // 창 닫기 시 트레이 모드이면 숨기기만 함
+  mainWindow.on("close", (e) => {
+    if (!app.isQuitting) {
+      e.preventDefault();
+      mainWindow.hide();
+    }
+  });
+
   // 시작 3초 후 업데이트 확인
   if (updater) {
     setTimeout(() => updater.checkForUpdates().catch(() => {}), 3000);
   }
 });
 
-app.on("window-all-closed", () => app.quit());
+app.on("window-all-closed", () => {
+  if (process.platform !== "win32") app.quit();
+});

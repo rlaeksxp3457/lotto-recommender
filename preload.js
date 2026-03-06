@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld("api", {
   windowMinimize:    () => ipcRenderer.invoke("window-minimize"),
   windowMaximize:    () => ipcRenderer.invoke("window-maximize"),
   windowClose:       () => ipcRenderer.invoke("window-close"),
+  windowHide:        () => ipcRenderer.invoke("window-hide"),
   windowIsMaximized: () => ipcRenderer.invoke("window-is-maximized"),
 
   // 앱 업데이트

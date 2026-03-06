@@ -992,7 +992,6 @@ body {
   border-radius: var(--radius);
   box-shadow: 0 0 0 4000px rgba(0,0,0,0.6);
   z-index: 1;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
 }
 
@@ -1003,9 +1002,26 @@ body {
   border-radius: 12px;
   padding: 20px 24px;
   max-width: 360px;
+  min-width: 300px;
   z-index: 2;
   box-shadow: 0 8px 32px rgba(88,101,242,0.3);
-  animation: tooltip-in 0.35s ease;
+}
+
+.tutorial-tooltip.tutorial-fade {
+  animation: tutorial-fadein 0.3s ease;
+}
+
+.tutorial-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.tutorial-counter {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
 .tutorial-tooltip h3 {
@@ -1024,8 +1040,7 @@ body {
 
 .tutorial-step-indicator {
   display: flex;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 5px;
 }
 
 .tutorial-dot {
@@ -1042,10 +1057,20 @@ body {
   border-radius: 4px;
 }
 
+.tutorial-dot.done {
+  background: var(--accent);
+  opacity: 0.4;
+}
+
 .tutorial-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.tutorial-nav {
+  display: flex;
+  gap: 8px;
 }
 
 .tutorial-btn-skip {
@@ -1059,6 +1084,20 @@ body {
 }
 
 .tutorial-btn-skip:hover { color: var(--text); }
+
+.tutorial-btn-prev {
+  background: var(--bg-lighter);
+  color: var(--text-dim);
+  border: none;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tutorial-btn-prev:hover { background: var(--bg-active); color: var(--text); }
 
 .tutorial-btn-next {
   background: var(--accent);
@@ -1074,9 +1113,124 @@ body {
 
 .tutorial-btn-next:hover { background: var(--accent-hover); }
 
-@keyframes tooltip-in {
-  from { opacity: 0; transform: translateY(10px) scale(0.95); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes tutorial-fadein {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ═══ 종료 확인 모달 ═══ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: modal-bg-in 0.2s ease;
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal-box {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 32px;
+  min-width: 340px;
+  max-width: 400px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+  animation: modal-in 0.25s ease;
+  text-align: center;
+}
+
+.modal-box h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+}
+
+.modal-box > p {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+}
+
+.modal-options {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.modal-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-main);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.modal-btn:hover {
+  border-color: var(--accent);
+  background: var(--bg-lighter);
+}
+
+.modal-btn.tray:hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.modal-btn.quit:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.modal-remember {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.modal-remember input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.modal-btn-cancel {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 6px 16px;
+  border-radius: 4px;
+}
+
+.modal-btn-cancel:hover { color: var(--text); }
+
+@keyframes modal-bg-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* ─── 업데이트 진행률 ─── */

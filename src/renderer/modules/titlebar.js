@@ -8,12 +8,61 @@ export function initTitlebar() {
     updateMaxBtn();
   });
 
+  // 닫기 버튼 → 모달 or 저장된 동작
   document.getElementById("btn-close").addEventListener("click", () => {
+    const saved = localStorage.getItem("close-action");
+    if (saved === "tray") {
+      window.api.windowHide();
+    } else if (saved === "quit") {
+      window.api.windowClose();
+    } else {
+      showCloseModal();
+    }
+  });
+
+  // 모달 버튼들
+  document.getElementById("modal-tray").addEventListener("click", () => {
+    saveCloseChoice("tray");
+    hideCloseModal();
+    window.api.windowHide();
+  });
+
+  document.getElementById("modal-quit").addEventListener("click", () => {
+    saveCloseChoice("quit");
+    hideCloseModal();
     window.api.windowClose();
+  });
+
+  document.getElementById("modal-cancel").addEventListener("click", hideCloseModal);
+
+  // ESC로 모달 닫기
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const modal = document.getElementById("close-modal");
+      if (!modal.classList.contains("hidden")) {
+        hideCloseModal();
+      }
+    }
   });
 
   window.addEventListener("resize", updateMaxBtn);
   updateMaxBtn();
+}
+
+function showCloseModal() {
+  const modal = document.getElementById("close-modal");
+  document.getElementById("modal-remember-check").checked = false;
+  modal.classList.remove("hidden");
+}
+
+function hideCloseModal() {
+  document.getElementById("close-modal").classList.add("hidden");
+}
+
+function saveCloseChoice(action) {
+  if (document.getElementById("modal-remember-check").checked) {
+    localStorage.setItem("close-action", action);
+  }
 }
 
 async function updateMaxBtn() {
