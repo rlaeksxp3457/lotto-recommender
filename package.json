@@ -1,0 +1,61 @@
+{
+  "name": "lotto-recommender",
+  "version": "2.0.0",
+  "description": "로또 당첨번호 분석 및 추천 앱",
+  "main": "main.js",
+  "author": "LottoApp",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "build:dir": "electron-builder --win --dir"
+  },
+  "build": {
+    "appId": "com.lotto.recommender",
+    "productName": "로또 추천기",
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "dir",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": null,
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": ["ko-KR"],
+      "language": "1042",
+      "installerIcon": null,
+      "uninstallerIcon": null,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "로또 추천기"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "!src/renderer/**/*.map",
+      "!backtest.js",
+      "!lotto_analyzer.*",
+      "!**/*.md"
+    ],
+    "extraResources": [],
+    "directories": {
+      "output": "dist"
+    },
+    "afterPack": "./scripts/afterPack.js"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^26.8.1"
+  }
+}
