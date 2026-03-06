@@ -4,3 +4,5 @@ dist/
 .claude/
 dist2/
 certs/
+dist4/
+lotto_analyzer.*

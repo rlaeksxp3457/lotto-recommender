@@ -10,6 +10,7 @@ import { renderNeverDrawnInfo, generateNeverDrawn } from "./modules/neverdrawn.j
 import { renderFrequencyChart, renderInsights } from "./modules/charts.js";
 import { updateDataInfo, initUpdate } from "./modules/update.js";
 import { tutorial, initTutorial } from "./modules/tutorial.js";
+import { initPension, generatePensionTop5, generatePensionRecommendations } from "./modules/pension.js";
 
 // ── UI 초기화 ──
 initTitlebar();
@@ -18,11 +19,16 @@ initTutorial();
 
 const getRecCount = setupCounter("rec-minus", "rec-plus", "rec-count", 1, 10, 1);
 const getNdCount = setupCounter("nd-minus", "nd-plus", "nd-count", 1, 20, 5);
+const getPensionRecCount = setupCounter("pension-rec-minus", "pension-rec-plus", "pension-rec-count", 1, 10, 1);
 
 // 버튼 이벤트
 document.getElementById("btn-top5").addEventListener("click", generateTop5);
 document.getElementById("btn-recommend").addEventListener("click", () => generateRecommendations(getRecCount));
 document.getElementById("btn-neverdrawn").addEventListener("click", () => generateNeverDrawn(getNdCount));
+
+// 연금복권 버튼 이벤트
+document.getElementById("btn-pension-top5").addEventListener("click", generatePensionTop5);
+document.getElementById("btn-pension-rec").addEventListener("click", () => generatePensionRecommendations(getPensionRecCount));
 
 initUpdate();
 
@@ -43,6 +49,9 @@ async function init() {
   renderNeverDrawnInfo();
   await generateTop5();
   await generateRecommendations(getRecCount);
+
+  // 연금복권 초기화
+  await initPension();
 
   // 첫 실행 튜토리얼
   if (!localStorage.getItem("tutorial-done")) {

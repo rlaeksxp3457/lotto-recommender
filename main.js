@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } = require("electron");
 const path = require("path");
 const { setupIpc } = require("./src/ipc");
+const { setupPensionIpc } = require("./src/pension_ipc");
 
 // ── 단일 인스턴스 ──
 const gotLock = app.requestSingleInstanceLock();
@@ -112,6 +113,7 @@ const updater = setupAutoUpdater();
 
 // ── IPC 핸들러 등록 ──
 setupIpc(ipcMain, () => mainWindow);
+setupPensionIpc(ipcMain, () => mainWindow);
 
 // ── 트레이 생성 ──
 function createTray() {

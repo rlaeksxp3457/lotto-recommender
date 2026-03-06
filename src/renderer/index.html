@@ -94,6 +94,14 @@
         </button>
       </nav>
 
+      <div class="sidebar-section-label">연금복권</div>
+      <nav class="sidebar-nav">
+        <button class="nav-item" data-tab="pension" id="nav-pension">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+          연금복권720+
+        </button>
+      </nav>
+
       <div class="sidebar-bottom">
         <!-- 업데이트 드롭다운 -->
         <div class="dropdown-wrap" id="update-dropdown-wrap">
@@ -221,6 +229,59 @@
           <div class="card"><h3>오래된 미출현 번호</h3><div id="overdue-numbers"></div></div>
           <div class="card"><h3>합계 통계</h3><div id="sum-stats"></div></div>
           <div class="card"><h3>빈출 쌍 Top 10</h3><div id="top-pairs"></div></div>
+        </div>
+      </section>
+
+      <!-- 탭: 연금복권720+ -->
+      <section id="tab-pension" class="tab-content">
+        <!-- TOP 5 추천 -->
+        <div class="pension-top-section">
+          <div class="pension-top-header">
+            <div class="pension-top-title-row">
+              <div class="pension-badge">720+</div>
+              <h2>연금복권 추천</h2>
+            </div>
+            <p class="pension-subtitle">위치별 빈도 분석 기반 상위 5개 전략 추천</p>
+            <button id="btn-pension-top5" class="btn-pension-top5" disabled>
+              <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+              5게임 추천받기
+            </button>
+          </div>
+          <div id="pension-ticket" class="pension-ticket"></div>
+        </div>
+
+        <div class="section-divider"><span>전체 7가지 전략별 추천</span></div>
+
+        <div class="content-header">
+          <h2>전략별 추천</h2>
+          <p class="content-desc">7가지 위치별 분석 전략 기반 추천 번호</p>
+        </div>
+        <div class="action-bar">
+          <button id="btn-pension-rec" class="btn-primary" disabled>번호 추천받기</button>
+          <div class="count-control">
+            <label>전략별 추출 수</label>
+            <button class="count-btn" id="pension-rec-minus">-</button>
+            <span class="count-value" id="pension-rec-count">1</span>
+            <button class="count-btn" id="pension-rec-plus">+</button>
+          </div>
+        </div>
+        <div id="pension-recommendations" class="card-grid"></div>
+
+        <div class="section-divider"><span>위치별 빈도 분석</span></div>
+
+        <div class="content-header">
+          <h2>위치별 숫자 빈도</h2>
+          <p class="content-desc">각 자릿수별 출현 빈도 (조 + 6자리)</p>
+        </div>
+        <div id="pension-freq-chart" class="pension-freq-grid"></div>
+
+        <div class="section-divider"><span>통계 분석</span></div>
+
+        <div class="pension-stats-grid">
+          <div class="card"><h3>조 분포</h3><div id="pension-group-dist"></div></div>
+          <div class="card"><h3>위치별 핫 숫자</h3><div id="pension-hot"></div></div>
+          <div class="card"><h3>위치별 콜드 숫자</h3><div id="pension-cold"></div></div>
+          <div class="card"><h3>데이터 정보</h3><div id="pension-data-info"></div></div>
         </div>
       </section>
     </main>

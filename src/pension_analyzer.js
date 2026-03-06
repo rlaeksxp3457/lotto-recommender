@@ -1,0 +1,425 @@
+/**
+ * 연금복권720+ 분석 및 추천 엔진
+ * - 위치별(조 + 6자리) 독립 빈도 분석
+ * - 7가지 추천 전략
+ */
+
+const EMBEDDED_DATA = require("./pension_data");
+
+// ─── 데이터 변환 ───
+
+function parseRecords(rawData) {
+  return rawData.map(r => ({
+    round:  r[0],
+    date:   r[1],
+    group:  r[2],                              // 조 (1~5)
+    digits: [r[3], r[4], r[5], r[6], r[7], r[8]], // 6자리 각 0~9
+    bonus:  r[9],                              // 보너스 6자리 문자열
+  }));
+}
+
+function getRecords(extraData = []) {
+  const all = [...EMBEDDED_DATA, ...extraData];
+  const seen = new Set();
+  const unique = all.filter(r => {
+    if (seen.has(r[0])) return false;
+    seen.add(r[0]);
+    return true;
+  });
+  unique.sort((a, b) => a[0] - b[0]);
+  return parseRecords(unique);
+}
+
+// ─── 통계 분석 ───
+
+class PensionStats {
+  constructor(records) {
+    this.records = records;
+    this.total = records.length;
+
+    // 위치별 빈도: posFreq[pos][digit]
+    // pos 0 = 조(1~5), pos 1~6 = 각 자리(0~9)
+    this.posFreq = Array.from({ length: 7 }, () => new Array(10).fill(0));
+    for (const r of records) {
+      this.posFreq[0][r.group]++;
+      for (let i = 0; i < 6; i++) {
+        this.posFreq[i + 1][r.digits[i]]++;
+      }
+    }
+
+    this.recent50 = this._recentFreq(50);
+    this.recent100 = this._recentFreq(100);
+    this.lastSeen = this._lastSeen();
+    this.adjacentPairFreq = this._adjacentPairFreq();
+    this.transitionMatrix = this._buildTransitionMatrix();
+  }
+
+  _recentFreq(n) {
+    const slice = this.records.slice(-n);
+    const freq = Array.from({ length: 7 }, () => new Array(10).fill(0));
+    for (const r of slice) {
+      freq[0][r.group]++;
+      for (let i = 0; i < 6; i++) {
+        freq[i + 1][r.digits[i]]++;
+      }
+    }
+    return freq;
+  }
+
+  _lastSeen() {
+    // lastSeen[pos][digit] = 몇 회차 전에 마지막 출현
+    const last = Array.from({ length: 7 }, () => new Array(10).fill(0));
+    for (const r of this.records) {
+      last[0][r.group] = r.round;
+      for (let i = 0; i < 6; i++) {
+        last[i + 1][r.digits[i]] = r.round;
+      }
+    }
+    const curRound = this.records[this.records.length - 1].round;
+    return last.map(pos => pos.map(v => (v === 0 ? curRound : curRound - v)));
+  }
+
+  _adjacentPairFreq() {
+    // 인접 위치(1-2, 2-3, ... 5-6) 숫자쌍 빈도
+    const freq = Array.from({ length: 5 }, () => {
+      const map = new Map();
+      return map;
+    });
+    for (const r of this.records) {
+      for (let i = 0; i < 5; i++) {
+        const key = `${r.digits[i]},${r.digits[i + 1]}`;
+        const map = freq[i];
+        map.set(key, (map.get(key) || 0) + 1);
+      }
+    }
+    return freq;
+  }
+
+  _buildTransitionMatrix() {
+    // 위치별 전이 행렬: transition[pos][prevDigit][nextDigit]
+    const matrix = Array.from({ length: 7 }, () =>
+      Array.from({ length: 10 }, () => new Array(10).fill(0))
+    );
+    for (let i = 0; i < this.records.length - 1; i++) {
+      const curr = this.records[i];
+      const next = this.records[i + 1];
+      matrix[0][curr.group][next.group]++;
+      for (let p = 0; p < 6; p++) {
+        matrix[p + 1][curr.digits[p]][next.digits[p]]++;
+      }
+    }
+    return matrix;
+  }
+
+  // 위치별 핫 숫자 (최근 50회 기준)
+  hotDigits(pos, n = 5) {
+    const freq = this.recent50[pos];
+    const max = pos === 0 ? 5 : 10;
+    return [...Array(max).keys()]
+      .map(d => (pos === 0 ? d + 1 : d))
+      .sort((a, b) => freq[b] - freq[a])
+      .slice(0, n);
+  }
+
+  // 위치별 콜드 숫자 (가장 오래된)
+  coldDigits(pos, n = 5) {
+    const ls = this.lastSeen[pos];
+    const max = pos === 0 ? 5 : 10;
+    return [...Array(max).keys()]
+      .map(d => (pos === 0 ? d + 1 : d))
+      .sort((a, b) => ls[b] - ls[a])
+      .slice(0, n);
+  }
+
+  getSummary() {
+    const lastRec = this.records[this.records.length - 1];
+    return {
+      total: this.total,
+      lastRound: lastRec.round,
+      dateRange: {
+        from: this.records[0].date,
+        to: lastRec.date,
+      },
+      // 위치별 빈도 (UI 차트용)
+      posFrequency: this.posFreq.map((freq, pos) => {
+        const max = pos === 0 ? 5 : 10;
+        const start = pos === 0 ? 1 : 0;
+        const maxFreq = Math.max(...freq.slice(start, start + max));
+        return Array.from({ length: max }, (_, i) => {
+          const d = start + i;
+          return {
+            digit: d,
+            count: freq[d],
+            pct: maxFreq > 0 ? +(freq[d] / maxFreq * 100).toFixed(1) : 0,
+          };
+        });
+      }),
+      // 조 분포
+      groupDist: Array.from({ length: 5 }, (_, i) => ({
+        group: i + 1,
+        count: this.posFreq[0][i + 1],
+        pct: +((this.posFreq[0][i + 1] / this.total) * 100).toFixed(1),
+      })),
+      // 위치별 핫/콜드
+      hotDigits: Array.from({ length: 7 }, (_, pos) => this.hotDigits(pos, 3)),
+      coldDigits: Array.from({ length: 7 }, (_, pos) => this.coldDigits(pos, 3)),
+      // 최근 당첨번호
+      lastWinning: {
+        round: lastRec.round,
+        group: lastRec.group,
+        digits: lastRec.digits,
+        bonus: lastRec.bonus,
+      },
+    };
+  }
+}
+
+// ─── 유틸리티 ───
+
+function weightedPick(candidates, weights) {
+  const total = weights.reduce((a, b) => a + b, 0);
+  if (total === 0) return candidates[Math.floor(Math.random() * candidates.length)];
+  let r = Math.random() * total;
+  for (let i = 0; i < candidates.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return candidates[i];
+  }
+  return candidates[candidates.length - 1];
+}
+
+function randomPick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function generateGroup(stats, method) {
+  const groups = [1, 2, 3, 4, 5];
+  if (method === "freq") {
+    const weights = groups.map(g => stats.posFreq[0][g] || 1);
+    return weightedPick(groups, weights);
+  }
+  if (method === "recent") {
+    const weights = groups.map(g => stats.recent50[0][g] || 1);
+    return weightedPick(groups, weights);
+  }
+  return randomPick(groups);
+}
+
+function generateDigit(stats, pos, method) {
+  const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  if (method === "freq") {
+    const weights = digits.map(d => stats.posFreq[pos][d] || 1);
+    return weightedPick(digits, weights);
+  }
+  if (method === "recent") {
+    const weights = digits.map(d => stats.recent50[pos][d] || 1);
+    return weightedPick(digits, weights);
+  }
+  if (method === "hot") {
+    return randomPick(stats.hotDigits(pos, 5));
+  }
+  if (method === "cold") {
+    return randomPick(stats.coldDigits(pos, 5));
+  }
+  return randomPick(digits);
+}
+
+// ─── 검증 ───
+
+function isValid(group, digits) {
+  // 모든 자리 같은 숫자 배제
+  if (digits.every(d => d === digits[0])) return false;
+  // 3자리 이상 연속 숫자 배제 (1-2-3, 3-2-1 등)
+  for (let i = 0; i < digits.length - 2; i++) {
+    const d1 = digits[i], d2 = digits[i + 1], d3 = digits[i + 2];
+    if (d2 - d1 === 1 && d3 - d2 === 1) return false; // 오름차순 연속
+    if (d1 - d2 === 1 && d2 - d3 === 1) return false; // 내림차순 연속
+  }
+  return true;
+}
+
+// ─── 7가지 추천 전략 ───
+
+/** 전략 1: 위치별 빈도 가중 */
+function strategyFrequency(stats) {
+  for (let t = 0; t < 500; t++) {
+    const group = generateGroup(stats, "freq");
+    const digits = Array.from({ length: 6 }, (_, i) => generateDigit(stats, i + 1, "freq"));
+    if (isValid(group, digits)) return { group, digits };
+  }
+  const group = generateGroup(stats, "random");
+  return { group, digits: Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)) };
+}
+
+/** 전략 2: 핫/콜드 균형 */
+function strategyHotCold(stats) {
+  for (let t = 0; t < 500; t++) {
+    const group = generateGroup(stats, "freq");
+    const digits = Array.from({ length: 6 }, (_, i) => {
+      // 홀수 위치는 핫, 짝수 위치는 콜드 (또는 랜덤 혼합)
+      return Math.random() < 0.5
+        ? generateDigit(stats, i + 1, "hot")
+        : generateDigit(stats, i + 1, "cold");
+    });
+    if (isValid(group, digits)) return { group, digits };
+  }
+  return { group: randomPick([1,2,3,4,5]), digits: Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)) };
+}
+
+/** 전략 3: 최근 트렌드 */
+function strategyRecent(stats) {
+  for (let t = 0; t < 500; t++) {
+    const group = generateGroup(stats, "recent");
+    const digits = Array.from({ length: 6 }, (_, i) => generateDigit(stats, i + 1, "recent"));
+    if (isValid(group, digits)) return { group, digits };
+  }
+  return { group: randomPick([1,2,3,4,5]), digits: Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)) };
+}
+
+/** 전략 4: 연속 회피 (빈도 가중 + 연속 체크 강화) */
+function strategyConsecutiveAvoid(stats) {
+  for (let t = 0; t < 1000; t++) {
+    const group = generateGroup(stats, "freq");
+    const digits = Array.from({ length: 6 }, (_, i) => generateDigit(stats, i + 1, "freq"));
+    // 강화된 연속 체크: 인접 2자리도 연속이면 배제
+    let hasConsec = false;
+    for (let i = 0; i < 5; i++) {
+      if (Math.abs(digits[i] - digits[i + 1]) <= 1 && digits[i] === digits[i + 1]) {
+        hasConsec = true; break;
+      }
+    }
+    if (!hasConsec && isValid(group, digits)) return { group, digits };
+  }
+  return strategyFrequency(stats);
+}
+
+/** 전략 5: 인접쌍 패턴 */
+function strategyAdjacentPattern(stats) {
+  for (let t = 0; t < 500; t++) {
+    const group = generateGroup(stats, "freq");
+    const digits = new Array(6);
+
+    // 첫 번째 자리: 빈도 기반
+    digits[0] = generateDigit(stats, 1, "freq");
+
+    // 나머지: 인접쌍 빈도 기반으로 다음 자리 선택
+    for (let i = 1; i < 6; i++) {
+      const pairMap = stats.adjacentPairFreq[i - 1];
+      const candidates = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+      const weights = candidates.map(d => {
+        const key = `${digits[i - 1]},${d}`;
+        return (pairMap.get(key) || 0) + 1; // +1 스무딩
+      });
+      digits[i] = weightedPick(candidates, weights);
+    }
+
+    if (isValid(group, digits)) return { group, digits };
+  }
+  return strategyFrequency(stats);
+}
+
+/** 전략 6: 마르코프 체인 */
+function strategyMarkov(stats) {
+  const lastRec = stats.records[stats.records.length - 1];
+
+  for (let t = 0; t < 500; t++) {
+    // 조: 전이 확률 기반
+    const groupWeights = [0, ...Array.from({ length: 5 }, (_, i) => {
+      return stats.transitionMatrix[0][lastRec.group][i + 1] + 1;
+    })];
+    const group = weightedPick([1, 2, 3, 4, 5], groupWeights.slice(1));
+
+    // 각 자리: 전이 확률 기반
+    const digits = Array.from({ length: 6 }, (_, i) => {
+      const prevDigit = lastRec.digits[i];
+      const weights = Array.from({ length: 10 }, (_, d) => {
+        return stats.transitionMatrix[i + 1][prevDigit][d] + 1;
+      });
+      return weightedPick([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], weights);
+    });
+
+    if (isValid(group, digits)) return { group, digits };
+  }
+  return strategyFrequency(stats);
+}
+
+/** 전략 7: 균형 분포 (홀짝 + 고저) */
+function strategyBalanced(stats) {
+  for (let t = 0; t < 500; t++) {
+    const group = generateGroup(stats, "freq");
+    const digits = Array.from({ length: 6 }, (_, i) => generateDigit(stats, i + 1, "freq"));
+
+    // 홀짝 균형: 2~4개 홀수
+    const oddCount = digits.filter(d => d % 2 === 1).length;
+    if (oddCount < 2 || oddCount > 4) continue;
+
+    // 고저 균형: 2~4개 저수(0~4)
+    const lowCount = digits.filter(d => d <= 4).length;
+    if (lowCount < 2 || lowCount > 4) continue;
+
+    if (isValid(group, digits)) return { group, digits };
+  }
+  return strategyFrequency(stats);
+}
+
+// ─── 추천 결과 생성 ───
+
+const STRATEGIES = [
+  { name: "위치별 빈도 가중",   desc: "각 위치에서 출현 빈도 기반 가중 랜덤",   fn: strategyFrequency       },
+  { name: "핫/콜드 균형",      desc: "각 위치의 핫·콜드 숫자 혼합 선택",       fn: strategyHotCold         },
+  { name: "최근 트렌드",       desc: "최근 50회 데이터 기반 가중 선택",        fn: strategyRecent          },
+  { name: "연속 회피",         desc: "인접 자릿수 연속 패턴 배제",            fn: strategyConsecutiveAvoid },
+  { name: "인접쌍 패턴",       desc: "인접 위치 동시출현 빈도 기반 확장",      fn: strategyAdjacentPattern  },
+  { name: "마르코프 체인",     desc: "직전 회차 전이 확률 기반 예측",          fn: strategyMarkov           },
+  { name: "균형 분포",         desc: "홀짝 균형 + 고저(0-4/5-9) 분포 유지",   fn: strategyBalanced         },
+];
+
+function getPensionRecommendations(stats, count = 1) {
+  const results = [];
+  for (const { name, desc, fn } of STRATEGIES) {
+    for (let i = 0; i < count; i++) {
+      const { group, digits } = fn(stats);
+      const oddCount = digits.filter(d => d % 2 === 1).length;
+      const lowCount = digits.filter(d => d <= 4).length;
+      const digitSum = digits.reduce((a, b) => a + b, 0);
+      results.push({
+        name, desc, group, digits,
+        sum: digitSum,
+        odd: oddCount, even: 6 - oddCount,
+        low: lowCount, high: 6 - lowCount,
+        setIndex: i,
+      });
+    }
+  }
+  return results;
+}
+
+// ─── TOP 5 추천 ───
+// 성능순: 빈도가중 > 마르코프 > 인접쌍 > 최근트렌드 > 균형분포
+const TOP5_INDICES = [0, 5, 4, 2, 6];
+
+function getPensionTop5(stats) {
+  const results = [];
+  for (const idx of TOP5_INDICES) {
+    const { name, desc, fn } = STRATEGIES[idx];
+    const { group, digits } = fn(stats);
+    const oddCount = digits.filter(d => d % 2 === 1).length;
+    const lowCount = digits.filter(d => d <= 4).length;
+    const digitSum = digits.reduce((a, b) => a + b, 0);
+    results.push({
+      game: results.length + 1,
+      name, desc, group, digits,
+      sum: digitSum,
+      odd: oddCount, even: 6 - oddCount,
+      low: lowCount, high: 6 - lowCount,
+    });
+  }
+  return results;
+}
+
+module.exports = {
+  getRecords,
+  PensionStats,
+  getPensionRecommendations,
+  getPensionTop5,
+  EMBEDDED_DATA,
+};

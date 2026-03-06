@@ -11,6 +11,13 @@ contextBridge.exposeInMainWorld("api", {
   getAppVersion:      ()      => ipcRenderer.invoke("get-app-version"),
   onUpdateProgress:   (cb)    => ipcRenderer.on("update-progress", (_e, msg) => cb(msg)),
 
+  // 연금복권720+
+  pensionInitData:           ()      => ipcRenderer.invoke("pension-init-data"),
+  pensionGetRecommendations: (count) => ipcRenderer.invoke("pension-get-recommendations", count),
+  pensionGetTop5:            ()      => ipcRenderer.invoke("pension-get-top5"),
+  pensionUpdateData:         ()      => ipcRenderer.invoke("pension-update-data"),
+  onPensionUpdateProgress:   (cb)    => ipcRenderer.on("pension-update-progress", (_e, msg) => cb(msg)),
+
   // 윈도우 컨트롤
   windowMinimize:    () => ipcRenderer.invoke("window-minimize"),
   windowMaximize:    () => ipcRenderer.invoke("window-maximize"),

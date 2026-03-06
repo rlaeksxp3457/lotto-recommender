@@ -1256,3 +1256,423 @@ body {
   text-align: center;
   opacity: 0.6;
 }
+
+/* ═══════════════════════════════════════════
+   연금복권720+ 전용 스타일
+   ═══════════════════════════════════════════ */
+
+/* ─── 배지 ─── */
+
+.pension-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #fff;
+  background: linear-gradient(135deg, #00b4d8, #0096c7);
+  box-shadow: 0 2px 8px rgba(0, 180, 216, 0.35);
+}
+
+/* ─── TOP 섹션 ─── */
+
+.pension-top-section {
+  margin-bottom: 32px;
+}
+
+.pension-top-header {
+  margin-bottom: 16px;
+}
+
+.pension-top-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.pension-top-title-row h2 {
+  font-size: 22px;
+  color: var(--text);
+  margin: 0;
+}
+
+.pension-subtitle {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 4px 0 16px;
+}
+
+.btn-pension-top5 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #00b4d8 0%, #0096c7 100%);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 3px 12px rgba(0, 180, 216, 0.3);
+}
+
+.btn-pension-top5:hover:not(:disabled) {
+  background: linear-gradient(135deg, #48cae4 0%, #00b4d8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(0, 180, 216, 0.4);
+}
+
+.btn-pension-top5:active:not(:disabled) { transform: translateY(1px); }
+.btn-pension-top5:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-pension-top5 svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ─── 티켓 ─── */
+
+.pension-ticket {
+  background: linear-gradient(135deg, #f0f4f8, #e2e8f0);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.pension-ticket-header {
+  background: linear-gradient(135deg, #0096c7, #00b4d8);
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pension-ticket-header-title {
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+.pension-ticket-header-sub {
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+}
+
+.pension-ticket-games {
+  padding: 12px 20px;
+}
+
+.pension-ticket-game {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+.pension-ticket-game:last-child { border-bottom: none; }
+
+.pension-ticket-game-label {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0096c7;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.pension-ticket-game-digits {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.pension-ticket-game-strategy {
+  font-size: 11px;
+  color: #64748b;
+  min-width: 80px;
+  text-align: right;
+}
+
+.pension-ticket-footer {
+  background: #e2e8f0;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.pension-ticket-footer-bold {
+  font-weight: 700;
+  color: #0096c7;
+}
+
+/* ─── 숫자 박스 (digit) ─── */
+
+.pension-digit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 42px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.pension-digit::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  right: 4px;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, transparent 100%);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.pension-digit.small {
+  width: 28px;
+  height: 34px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+.pension-digit.ticket-size {
+  width: 30px;
+  height: 36px;
+  font-size: 15px;
+  border-radius: 6px;
+}
+
+/* 조 스타일 */
+.pension-digit.group {
+  background: linear-gradient(135deg, #00b4d8, #0077b6);
+  min-width: 52px;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+.pension-digit.group.ticket-size {
+  min-width: 44px;
+  font-size: 13px;
+}
+
+/* 위치별 색상 */
+.pension-digit.pos-1 { background: linear-gradient(135deg, #ff6b6b, #e63946); }
+.pension-digit.pos-2 { background: linear-gradient(135deg, #ffa94d, #e67e22); }
+.pension-digit.pos-3 { background: linear-gradient(135deg, #69db7c, #27ae60); }
+.pension-digit.pos-4 { background: linear-gradient(135deg, #74c0fc, #3498db); }
+.pension-digit.pos-5 { background: linear-gradient(135deg, #b197fc, #8e44ad); }
+.pension-digit.pos-6 { background: linear-gradient(135deg, #f783ac, #e84393); }
+
+/* 숫자 등장 애니메이션 */
+.pension-digit.digit-animate {
+  animation: digitPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+@keyframes digitPop {
+  0% { transform: scale(0) rotateY(90deg); opacity: 0; }
+  60% { transform: scale(1.1) rotateY(-5deg); }
+  100% { transform: scale(1) rotateY(0); opacity: 1; }
+}
+
+/* ─── 조 구분자 ─── */
+
+.pension-group-sep {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 0 2px;
+  opacity: 0.5;
+}
+
+/* ─── 추천 카드 ─── */
+
+.pension-rec-digits {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+
+/* ─── 빈도 차트 그리드 ─── */
+
+.pension-freq-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pension-freq-col {
+  background: var(--bg-dark);
+  border: 1px solid var(--bg-lighter);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.pension-freq-col-title {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--bg-lighter);
+}
+
+.pension-freq-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.pension-freq-bar-label {
+  width: 16px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.pension-freq-bar-track {
+  flex: 1;
+  height: 14px;
+  background: var(--bg-main);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pension-freq-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.pension-freq-bar-fill.group { background: linear-gradient(90deg, #00b4d8, #0096c7); }
+.pension-freq-bar-fill.pos-1 { background: linear-gradient(90deg, #ff6b6b, #e63946); }
+.pension-freq-bar-fill.pos-2 { background: linear-gradient(90deg, #ffa94d, #e67e22); }
+.pension-freq-bar-fill.pos-3 { background: linear-gradient(90deg, #69db7c, #27ae60); }
+.pension-freq-bar-fill.pos-4 { background: linear-gradient(90deg, #74c0fc, #3498db); }
+.pension-freq-bar-fill.pos-5 { background: linear-gradient(90deg, #b197fc, #8e44ad); }
+.pension-freq-bar-fill.pos-6 { background: linear-gradient(90deg, #f783ac, #e84393); }
+
+.pension-freq-bar-count {
+  width: 28px;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* ─── 통계 그리드 ─── */
+
+.pension-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pension-stats-grid .card h3 {
+  color: #00b4d8;
+}
+
+.pension-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.pension-stat-row b {
+  color: var(--text);
+}
+
+.pension-group-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.pension-group-bar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  width: 32px;
+}
+
+.pension-group-bar-track {
+  flex: 1;
+  height: 20px;
+  background: var(--bg-main);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.pension-group-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00b4d8, #0096c7);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  transition: width 0.5s ease;
+}
+
+.pension-hot-cold-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 5px 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.pension-hot-cold-row .pos-label {
+  width: 50px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pension-hot-cold-row .pension-digit {
+  width: 24px;
+  height: 28px;
+  font-size: 12px;
+  border-radius: 5px;
+}
+
+/* 반응형 */
+@media (max-width: 1100px) {
+  .pension-freq-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .pension-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
