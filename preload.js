@@ -19,6 +19,13 @@ contextBridge.exposeInMainWorld("api", {
   pensionUpdateData:         ()      => ipcRenderer.invoke("pension-update-data"),
   onPensionUpdateProgress:   (cb)    => ipcRenderer.on("pension-update-progress", (_e, msg) => cb(msg)),
 
+  // 내 번호 관리
+  myNumbersLoad:         ()          => ipcRenderer.invoke("my-numbers-load"),
+  myNumbersSave:         (ticket)    => ipcRenderer.invoke("my-numbers-save", ticket),
+  myNumbersDelete:       (id)        => ipcRenderer.invoke("my-numbers-delete", id),
+  myNumbersCheckLotto:   (id)        => ipcRenderer.invoke("my-numbers-check-lotto", id),
+  myNumbersCheckPension: (id)        => ipcRenderer.invoke("my-numbers-check-pension", id),
+
   // 윈도우 컨트롤
   windowMinimize:    () => ipcRenderer.invoke("window-minimize"),
   windowMaximize:    () => ipcRenderer.invoke("window-maximize"),

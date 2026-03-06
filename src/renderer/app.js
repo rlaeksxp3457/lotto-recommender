@@ -11,6 +11,7 @@ import { renderFrequencyChart, renderInsights } from "./modules/charts.js";
 import { updateDataInfo, initUpdate } from "./modules/update.js";
 import { tutorial, initTutorial } from "./modules/tutorial.js";
 import { initPension, generatePensionTop5, generatePensionRecommendations } from "./modules/pension.js";
+import { initMyLotto, initMyPension } from "./modules/mynumbers.js";
 
 // ── UI 초기화 ──
 initTitlebar();
@@ -51,7 +52,11 @@ async function init() {
   await generateRecommendations(getRecCount);
 
   // 연금복권 초기화
-  await initPension();
+  await initPension(getPensionRecCount);
+
+  // 내 번호 초기화
+  await initMyLotto();
+  await initMyPension();
 
   // 첫 실행 튜토리얼
   if (!localStorage.getItem("tutorial-done")) {

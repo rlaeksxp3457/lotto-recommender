@@ -64,7 +64,7 @@ export async function generateTop5() {
   const avgSum = Math.round(totalSum / games.length);
   footer.innerHTML = `
     <span>5게임 평균 합계: <span class="ticket-footer-bold">${avgSum}</span></span>
-    <span>성능순 상위 5개 전략</span>
+    <span>성능순 상위 5개 알고리즘</span>
   `;
 
   container.appendChild(header);

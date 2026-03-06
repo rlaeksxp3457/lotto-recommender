@@ -1885,6 +1885,342 @@ body {
   max-width: 600px;
 }
 
+/* ─── 내 번호 관리 ─── */
+.my-numbers-form {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+.my-numbers-form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.my-numbers-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.my-numbers-field label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.my-numbers-field.numbers-field {
+  flex: 1;
+}
+.my-numbers-input {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-bright);
+  padding: 6px 10px;
+  font-size: 13px;
+  width: 80px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.my-numbers-input:focus {
+  border-color: var(--accent);
+}
+.my-numbers-input.pension-group-input {
+  width: 56px;
+}
+.my-numbers-inputs {
+  display: flex;
+  gap: 4px;
+}
+.my-lotto-num-input,
+.my-pension-digit-input {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-bright);
+  padding: 6px 4px;
+  font-size: 13px;
+  width: 42px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.my-lotto-num-input:focus,
+.my-pension-digit-input:focus {
+  border-color: var(--accent);
+}
+/* 숫자 스피너 숨기기 */
+.my-lotto-num-input::-webkit-inner-spin-button,
+.my-lotto-num-input::-webkit-outer-spin-button,
+.my-pension-digit-input::-webkit-inner-spin-button,
+.my-pension-digit-input::-webkit-outer-spin-button,
+.my-numbers-input::-webkit-inner-spin-button,
+.my-numbers-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.my-save-btn {
+  white-space: nowrap;
+  padding: 7px 18px;
+  height: fit-content;
+}
+.my-numbers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.my-numbers-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 0;
+  font-size: 14px;
+}
+.my-number-card {
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.2s;
+  border: 1px solid var(--border);
+}
+.my-number-card:hover {
+  border-color: var(--accent);
+}
+.my-number-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.my-number-round {
+  font-weight: 700;
+  color: var(--text-bright);
+  font-size: 14px;
+}
+.my-number-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.my-number-balls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.my-number-balls .lotto-ball {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+.my-number-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.my-number-check-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-width: 80px;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.my-number-check-btn:hover {
+  background: var(--accent-hover);
+}
+.my-number-check-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.my-number-del-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.my-number-del-btn:hover {
+  border-color: #ed4245;
+  color: #ed4245;
+  background: rgba(237, 66, 69, 0.1);
+}
+
+/* 당첨 결과 */
+.my-number-result {
+  padding: 8px 12px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.my-number-result.rank-1st {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.15));
+  border: 1px solid rgba(255, 215, 0, 0.4);
+}
+.my-number-result.rank-2nd {
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.15), rgba(169, 169, 169, 0.1));
+  border: 1px solid rgba(192, 192, 192, 0.3);
+}
+.my-number-result.rank-3rd {
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.15), rgba(184, 115, 51, 0.1));
+  border: 1px solid rgba(205, 127, 50, 0.3);
+}
+.my-number-result.rank-minor {
+  background: rgba(88, 101, 242, 0.1);
+  border: 1px solid rgba(88, 101, 242, 0.2);
+}
+.my-number-result.rank-miss {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+}
+.result-rank {
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--text-bright);
+}
+.rank-1st .result-rank { color: #ffd700; }
+.rank-2nd .result-rank { color: #c0c0c0; }
+.rank-3rd .result-rank { color: #cd7f32; }
+.result-detail {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.result-win-numbers {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.mini-ball {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+.mini-ball.c-yellow { background: linear-gradient(145deg, #fdd835, #f9a825); color: #333; }
+.mini-ball.c-blue   { background: linear-gradient(145deg, #64b5f6, #1976d2); }
+.mini-ball.c-red    { background: linear-gradient(145deg, #ef5350, #c62828); }
+.mini-ball.c-gray   { background: linear-gradient(145deg, #b0bec5, #607d8b); }
+.mini-ball.c-green  { background: linear-gradient(145deg, #aed581, #558b2f); }
+.mini-ball.bonus {
+  background: #7289da;
+  border: 1.5px dashed rgba(255,255,255,0.4);
+}
+
+/* ─── 카피라이트 ─── */
+.app-copyright {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-align: center;
+  opacity: 0.5;
+  padding: 2px 0 4px;
+}
+
+/* ─── 알고리즘 도움말 ─── */
+.algo-info-btn {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: all 0.2s;
+  line-height: 1;
+}
+.algo-info-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(88, 101, 242, 0.1);
+}
+.algo-info-btn.active {
+  border-color: var(--accent);
+  color: #fff;
+  background: var(--accent);
+}
+.rec-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rec-card-header h3 { flex-shrink: 0; }
+.rec-card-header .desc { flex: 1; min-width: 0; }
+
+.algo-detail {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s, padding 0.3s;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 0 12px;
+  margin: 0 0 4px;
+}
+.algo-detail.open {
+  max-height: 200px;
+  opacity: 1;
+  padding: 10px 12px;
+  margin: 6px 0 8px;
+}
+.algo-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.algo-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
 /* ─── 반응형 ─── */
 @media (max-width: 1100px) {
   .pension-freq-grid {

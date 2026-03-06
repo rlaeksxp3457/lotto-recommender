@@ -407,25 +407,32 @@ function strategyBalanced(stats) {
 // ─── 추천 결과 생성 ───
 
 const STRATEGIES = [
-  { name: "위치별 빈도 가중",   desc: "각 위치에서 출현 빈도 기반 가중 랜덤",   fn: strategyFrequency       },
-  { name: "핫/콜드 균형",      desc: "각 위치의 핫·콜드 숫자 혼합 선택",       fn: strategyHotCold         },
-  { name: "최근 트렌드",       desc: "최근 50회 데이터 기반 가중 선택",        fn: strategyRecent          },
-  { name: "연속 회피",         desc: "인접 자릿수 연속 패턴 배제",            fn: strategyConsecutiveAvoid },
-  { name: "인접쌍 패턴",       desc: "인접 위치 동시출현 빈도 기반 확장",      fn: strategyAdjacentPattern  },
-  { name: "마르코프 체인",     desc: "직전 회차 전이 확률 기반 예측",          fn: strategyMarkov           },
-  { name: "균형 분포",         desc: "홀짝 균형 + 고저(0-4/5-9) 분포 유지",   fn: strategyBalanced         },
+  { name: "위치별 빈도 가중",   desc: "각 위치에서 출현 빈도 기반 가중 랜덤",   fn: strategyFrequency,
+    howItWorks: ["조(1~5)와 6자리 각 위치별 숫자(0~9) 출현 빈도를 집계합니다.", "빈도가 높은 숫자일수록 해당 위치에서 선택될 확률을 높게 설정합니다.", "각 위치에서 가중 확률로 숫자를 선택하고 연속 패턴 유효성을 검증합니다."] },
+  { name: "핫/콜드 균형",      desc: "각 위치의 핫·콜드 숫자 혼합 선택",       fn: strategyHotCold,
+    howItWorks: ["각 위치에서 최근 많이 출현한 핫(Hot) 숫자 5개를 선별합니다.", "각 위치에서 가장 적게 출현한 콜드(Cold) 숫자 5개를 선별합니다.", "각 자리마다 50% 확률로 핫 또는 콜드 숫자를 선택하여 균형을 맞춥니다."] },
+  { name: "최근 트렌드",       desc: "최근 50회 데이터 기반 가중 선택",        fn: strategyRecent,
+    howItWorks: ["최근 50회 당첨번호만 별도로 분리하여 위치별 빈도를 계산합니다.", "전체 이력 대신 최근 트렌드에 집중하여 가중치를 부여합니다.", "최근 데이터 기반 가중 확률로 각 위치의 숫자를 선택합니다."] },
+  { name: "연속 회피",         desc: "인접 자릿수 연속 패턴 배제",            fn: strategyConsecutiveAvoid,
+    howItWorks: ["빈도 가중 방식으로 각 위치의 숫자를 우선 생성합니다.", "인접한 두 자리에 같은 숫자가 반복되는 패턴을 감지합니다.", "연속 패턴이 발견되면 폐기하고 조건을 만족할 때까지 재생성합니다."] },
+  { name: "인접쌍 패턴",       desc: "인접 위치 동시출현 빈도 기반 확장",      fn: strategyAdjacentPattern,
+    howItWorks: ["인접한 두 위치의 숫자 쌍(예: 1번째-2번째) 동시출현 빈도를 분석합니다.", "첫 번째 자리는 빈도 가중으로 선택하고, 이후 자리는 직전 자리와의 쌍 빈도를 가중치로 사용합니다.", "체인처럼 1→2→3→...→6번째 자리를 순차적으로 연결하며 생성합니다."] },
+  { name: "마르코프 체인",     desc: "직전 회차 전이 확률 기반 예측",          fn: strategyMarkov,
+    howItWorks: ["직전 회차의 조 및 6자리 숫자를 기준 상태로 설정합니다.", "각 위치에서 이전 숫자→다음 숫자 전이 확률 행렬을 조회합니다.", "전이 확률 기반 가중치로 다음 회차의 각 자릿수를 예측 선택합니다."] },
+  { name: "균형 분포",         desc: "홀짝 균형 + 고저(0-4/5-9) 분포 유지",   fn: strategyBalanced,
+    howItWorks: ["빈도 가중 방식으로 각 위치의 숫자를 생성합니다.", "6자리 중 홀수 개수가 2~4개인지 검증합니다.", "저수(0~4) 개수가 2~4개인지 추가 검증하여 균형 잡힌 번호를 확정합니다."] },
 ];
 
 function getPensionRecommendations(stats, count = 1) {
   const results = [];
-  for (const { name, desc, fn } of STRATEGIES) {
+  for (const { name, desc, fn, howItWorks } of STRATEGIES) {
     for (let i = 0; i < count; i++) {
       const { group, digits } = fn(stats);
       const oddCount = digits.filter(d => d % 2 === 1).length;
       const lowCount = digits.filter(d => d <= 4).length;
       const digitSum = digits.reduce((a, b) => a + b, 0);
       results.push({
-        name, desc, group, digits,
+        name, desc, howItWorks, group, digits,
         sum: digitSum,
         odd: oddCount, even: 6 - oddCount,
         low: lowCount, high: 6 - lowCount,

@@ -109,7 +109,7 @@ export async function generatePensionTop5() {
   const footer = document.createElement("div");
   footer.className = "pension-ticket-footer";
   footer.innerHTML = `
-    <span>성능순 상위 5개 전략</span>
+    <span>성능순 상위 5개 알고리즘</span>
     <span class="pension-ticket-footer-bold">연금복권720+</span>
   `;
 
@@ -155,6 +155,38 @@ export async function generatePensionRecommendations(getCount) {
       <span class="desc">${rec.desc}</span>
     `;
 
+    // 알고리즘 도움말 버튼 (첫 번째 세트에만 표시)
+    if (rec.howItWorks && rec.setIndex === 0) {
+      const infoBtn = document.createElement("button");
+      infoBtn.className = "algo-info-btn";
+      infoBtn.innerHTML = "ℹ";
+      infoBtn.title = "알고리즘 동작 원리";
+      infoBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const detail = card.querySelector(".algo-detail");
+        if (detail) {
+          detail.classList.toggle("open");
+          infoBtn.classList.toggle("active");
+        }
+      });
+      header.appendChild(infoBtn);
+    }
+
+    card.appendChild(header);
+
+    // 알고리즘 설명 패널
+    if (rec.howItWorks && rec.setIndex === 0) {
+      const detail = document.createElement("div");
+      detail.className = "algo-detail";
+      rec.howItWorks.forEach((step, i) => {
+        const stepEl = document.createElement("div");
+        stepEl.className = "algo-step";
+        stepEl.innerHTML = `<span class="algo-step-num">${i + 1}</span><span>${step}</span>`;
+        detail.appendChild(stepEl);
+      });
+      card.appendChild(detail);
+    }
+
     const digits = createNumberDisplay(rec.group, rec.digits, "", idx * 30);
 
     const stats = document.createElement("div");
@@ -165,7 +197,6 @@ export async function generatePensionRecommendations(getCount) {
       <span>저(0-4): <b>${rec.low}</b> 고(5-9): <b>${rec.high}</b></span>
     `;
 
-    card.appendChild(header);
     card.appendChild(digits);
     card.appendChild(stats);
     container.appendChild(card);
@@ -457,7 +488,7 @@ export function renderPensionDigitSumDist() {
 
 // ─── 초기화 ───
 
-export async function initPension() {
+export async function initPension(getRecCount) {
   const result = await window.api.pensionInitData();
   if (result.error) {
     showToast(result.error, "error");
@@ -484,4 +515,5 @@ export async function initPension() {
 
   // 초기 추천 생성
   await generatePensionTop5();
+  await generatePensionRecommendations(getRecCount);
 }
