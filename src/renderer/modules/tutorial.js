@@ -71,6 +71,17 @@ export const tutorial = {
     const targetEl = document.querySelector(step.target);
     if (!targetEl) { this.highlight.style.display = "none"; return; }
 
+    // 타겟이 비활성 탭에 있으면 해당 탭으로 전환
+    const tabContent = targetEl.closest(".tab-content");
+    if (tabContent && !tabContent.classList.contains("active")) {
+      document.querySelectorAll(".tab-content").forEach(s => s.classList.remove("active"));
+      tabContent.classList.add("active");
+      const tabId = tabContent.id.replace("tab-", "");
+      document.querySelectorAll(".nav-item[data-tab]").forEach(n => n.classList.remove("active"));
+      const navBtn = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
+      if (navBtn) navBtn.classList.add("active");
+    }
+
     const rect = targetEl.getBoundingClientRect();
     const pad = 6;
 

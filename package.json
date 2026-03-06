@@ -1,6 +1,6 @@
 {
   "name": "lotto-recommender",
-  "version": "2.9.1",
+  "version": "2.9.2",
   "description": "로또 당첨번호 분석 및 추천 앱",
   "main": "main.js",
   "author": "rlaeksxp3457",
@@ -67,7 +67,7 @@
       "!lotto_analyzer.*",
       "!**/*.md"
     ],
-    "extraResources": ["assets/tray-icon.png"],
+    "extraResources": ["assets/tray-icon.png", "assets/icon.ico"],
     "directories": {
       "output": "dist"
     },

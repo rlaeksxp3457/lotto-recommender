@@ -996,14 +996,16 @@ body {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.75);
   z-index: 0;
 }
 
 .tutorial-highlight {
   position: absolute;
   border-radius: var(--radius);
-  box-shadow: 0 0 0 4000px rgba(0,0,0,0.6);
+  box-shadow: 0 0 0 4000px rgba(0,0,0,0.75),
+              0 0 0 3px var(--accent),
+              0 0 20px 5px rgba(88,101,242,0.5);
   z-index: 1;
   pointer-events: none;
 }
