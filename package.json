@@ -1,6 +1,6 @@
 {
   "name": "lotto-recommender",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "로또 당첨번호 분석 및 추천 앱",
   "main": "main.js",
   "author": "rlaeksxp3457",
@@ -22,14 +22,18 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "dir",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
-      "icon": null,
+      "icon": "assets/icon.ico",
       "signtoolOptions": {
         "sign": "./scripts/sign.js"
       },
@@ -40,10 +44,13 @@
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "installerLanguages": ["ko-KR"],
+      "installerLanguages": [
+        "ko-KR"
+      ],
       "language": "1042",
-      "installerIcon": null,
-      "uninstallerIcon": null,
+      "installerIcon": "assets/icon.ico",
+      "uninstallerIcon": "assets/icon.ico",
+      "installerSidebar": "assets/installer-sidebar.bmp",
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "로또 추천기"
@@ -57,7 +64,7 @@
       "!lotto_analyzer.*",
       "!**/*.md"
     ],
-    "extraResources": [],
+    "extraResources": ["assets/tray-icon.png"],
     "directories": {
       "output": "dist"
     },
@@ -68,6 +75,8 @@
   },
   "devDependencies": {
     "electron": "^35.0.0",
-    "electron-builder": "^26.8.1"
+    "electron-builder": "^26.8.1",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.5"
   }
 }

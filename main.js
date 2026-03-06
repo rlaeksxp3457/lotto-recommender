@@ -115,10 +115,10 @@ setupIpc(ipcMain, () => mainWindow);
 
 // ── 트레이 생성 ──
 function createTray() {
-  // 16x16 간단한 아이콘 (파란 원)
-  const icon = nativeImage.createFromDataURL(
-    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAYklEQVR42mNkYPj/n4EKgJGJipoGMDExUdMABkZGagcBI+OA+YCRcWB9QG0XMDIyDogPGBkH1gcMDAwDYwBIE9V9gOoCahuAYgA17KS6C6jtA2q7AMMFVPcBtV1ADTcMAACR+TAR/bMFjQAAAABJRU5ErkJggg=="
-  );
+  const iconPath = app.isPackaged
+    ? path.join(process.resourcesPath, "tray-icon.png")
+    : path.join(__dirname, "assets", "tray-icon.png");
+  const icon = nativeImage.createFromPath(iconPath);
 
   tray = new Tray(icon);
   tray.setToolTip("로또 추천기");

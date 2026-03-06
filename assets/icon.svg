@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5865f2"/>
+      <stop offset="100%" stop-color="#4752c4"/>
+    </linearGradient>
+    <linearGradient id="ball1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdd835"/>
+      <stop offset="100%" stop-color="#f9a825"/>
+    </linearGradient>
+    <linearGradient id="ball2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64b5f6"/>
+      <stop offset="100%" stop-color="#1976d2"/>
+    </linearGradient>
+    <linearGradient id="ball3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef5350"/>
+      <stop offset="100%" stop-color="#c62828"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <!-- Background rounded square -->
+  <rect width="256" height="256" rx="48" fill="url(#bg)"/>
+  <!-- Three lotto balls -->
+  <!-- Ball 1 (yellow, top-left) -->
+  <circle cx="88" cy="88" r="36" fill="url(#ball1)" filter="url(#shadow)"/>
+  <ellipse cx="80" cy="78" rx="12" ry="7" fill="rgba(255,255,255,0.4)"/>
+  <text x="88" y="97" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="30" fill="#333">6</text>
+  <!-- Ball 2 (blue, top-right) -->
+  <circle cx="168" cy="88" r="36" fill="url(#ball2)" filter="url(#shadow)"/>
+  <ellipse cx="160" cy="78" rx="12" ry="7" fill="rgba(255,255,255,0.4)"/>
+  <text x="168" y="97" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="28" fill="#fff">45</text>
+  <!-- Ball 3 (red, bottom-center) -->
+  <circle cx="128" cy="168" r="36" fill="url(#ball3)" filter="url(#shadow)"/>
+  <ellipse cx="120" cy="158" rx="12" ry="7" fill="rgba(255,255,255,0.4)"/>
+  <text x="128" y="177" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="26" fill="#fff">L</text>
+  <!-- Sparkle accents -->
+  <circle cx="50" cy="170" r="4" fill="rgba(255,255,255,0.6)"/>
+  <circle cx="206" cy="170" r="3" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="128" cy="42" r="3" fill="rgba(255,255,255,0.5)"/>
+  <circle cx="44" cy="44" r="2.5" fill="rgba(255,255,255,0.4)"/>
+  <circle cx="212" cy="44" r="2" fill="rgba(255,255,255,0.35)"/>
+</svg>
