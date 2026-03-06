@@ -1,6 +1,6 @@
 {
   "name": "lotto-recommender",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "로또 당첨번호 분석 및 추천 앱",
   "main": "main.js",
   "author": "rlaeksxp3457",
@@ -35,6 +35,7 @@
       },
       "signAndEditExecutable": true
     },
+    "artifactName": "lotto-recommender-setup-${version}.${ext}",
     "nsis": {
       "oneClick": false,
       "perMachine": false,
