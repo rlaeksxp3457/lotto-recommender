@@ -24,8 +24,14 @@
     </div>
   </div>
 
-  <!-- 업데이트 배너 -->
-  <div id="update-banner" class="update-banner hidden"></div>
+  <!-- 업데이트 모달 -->
+  <div id="update-modal" class="modal-overlay hidden">
+    <div class="modal-box update-modal-box">
+      <h3 class="update-modal-title">업데이트 확인 중</h3>
+      <div class="update-modal-body"></div>
+      <div class="update-modal-actions"></div>
+    </div>
+  </div>
 
   <!-- 튜토리얼 오버레이 -->
   <div id="tutorial-overlay" class="tutorial-overlay hidden">
@@ -51,7 +57,6 @@
   <div id="close-modal" class="modal-overlay hidden">
     <div class="modal-box">
       <h3>앱 종료</h3>
-      <p>앱을 어떻게 처리할까요?</p>
       <div class="modal-options">
         <button id="modal-tray" class="modal-btn tray">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18 16v2H6v-2H3v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4h-3zM7 9l5 5 5-5h-3V3h-4v6H7z" transform="rotate(180 12 12)"/></svg>
@@ -67,6 +72,22 @@
         이 선택을 기억하기
       </label>
       <button id="modal-cancel" class="modal-btn-cancel">취소</button>
+    </div>
+  </div>
+
+  <!-- 후원 모달 -->
+  <div id="donate-modal" class="modal-overlay hidden">
+    <div class="modal-box donate-modal-box">
+      <h3>개발자 후원</h3>
+      <div class="donate-icon">☕</div>
+      <p class="donate-msg">커피 한 잔의 후원이 개발에 큰 힘이 됩니다!</p>
+      <div class="donate-info">
+        <div class="donate-row"><span class="donate-label">은행</span><span class="donate-value">토스뱅크</span></div>
+        <div class="donate-row"><span class="donate-label">계좌</span><span class="donate-value" id="donate-account">100038949476</span></div>
+        <div class="donate-row"><span class="donate-label">예금주</span><span class="donate-value">이범수</span></div>
+      </div>
+      <button id="donate-copy-btn" class="modal-btn tray">계좌번호 복사</button>
+      <button id="donate-close-btn" class="modal-btn-cancel">닫기</button>
     </div>
   </div>
 
@@ -91,6 +112,10 @@
         <button class="nav-item" data-tab="insights" id="nav-insights">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
           핫/콜드 분석
+        </button>
+        <button class="nav-item" data-tab="lotto-history" id="nav-lotto-history">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+          당첨 이력
         </button>
         <button class="nav-item" data-tab="my-lotto" id="nav-my-lotto">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
@@ -150,6 +175,12 @@
         <button id="btn-tutorial" class="nav-item tutorial-btn">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
           도움말
+        </button>
+
+        <!-- 개발자 후원 -->
+        <button id="btn-donate" class="nav-item donate-btn">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21h4V9H2v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L15.17 1 7.59 8.59C7.22 8.95 7 9.45 7 10v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/></svg>
+          개발자 후원
         </button>
 
         <div id="data-info" class="data-info"></div>
@@ -258,31 +289,34 @@
         </div>
       </section>
 
+      <!-- 탭: 로또 당첨 이력 -->
+      <section id="tab-lotto-history" class="tab-content">
+        <div class="content-header">
+          <h2>당첨 이력</h2>
+          <p class="content-desc">최근 50회 로또 6/45 1등 당첨번호</p>
+        </div>
+        <div id="lotto-history" class="lotto-history-wrap"></div>
+      </section>
+
       <!-- 탭: 로또 내 번호 -->
       <section id="tab-my-lotto" class="tab-content">
         <div class="content-header">
           <h2>내 번호 관리</h2>
-          <p class="content-desc">구매한 로또 번호를 저장하고 당첨 결과를 확인하세요</p>
+          <p class="content-desc">구매한 로또 번호를 저장하고 당첨 결과를 확인하세요 (최대 5세트)</p>
         </div>
         <div class="my-numbers-form">
-          <div class="my-numbers-form-row">
+          <div class="my-batch-header">
             <div class="my-numbers-field">
               <label>회차</label>
               <input type="number" id="my-lotto-round" class="my-numbers-input" placeholder="예: 1214" min="1">
             </div>
-            <div class="my-numbers-field numbers-field">
-              <label>번호 (6개)</label>
-              <div class="my-numbers-inputs">
-                <input type="number" class="my-lotto-num-input" min="1" max="45" placeholder="1">
-                <input type="number" class="my-lotto-num-input" min="1" max="45" placeholder="2">
-                <input type="number" class="my-lotto-num-input" min="1" max="45" placeholder="3">
-                <input type="number" class="my-lotto-num-input" min="1" max="45" placeholder="4">
-                <input type="number" class="my-lotto-num-input" min="1" max="45" placeholder="5">
-                <input type="number" class="my-lotto-num-input" min="1" max="45" placeholder="6">
-              </div>
+            <div class="my-batch-controls">
+              <button id="my-lotto-add-row" class="btn-small">+ 행 추가</button>
+              <span id="my-lotto-row-count">1/5</span>
             </div>
-            <button id="my-lotto-save-btn" class="btn-primary my-save-btn">저장</button>
           </div>
+          <div id="my-lotto-rows" class="my-batch-rows"></div>
+          <button id="my-lotto-save-btn" class="btn-primary my-save-btn">저장</button>
         </div>
         <div id="my-lotto-list" class="my-numbers-list"></div>
       </section>
@@ -370,31 +404,21 @@
       <section id="tab-my-pension" class="tab-content">
         <div class="content-header">
           <h2>내 번호 관리</h2>
-          <p class="content-desc">구매한 연금복권 번호를 저장하고 당첨 결과를 확인하세요</p>
+          <p class="content-desc">구매한 연금복권 번호를 저장하고 당첨 결과를 확인하세요 (최대 5세트)</p>
         </div>
         <div class="my-numbers-form">
-          <div class="my-numbers-form-row">
+          <div class="my-batch-header">
             <div class="my-numbers-field">
               <label>회차</label>
               <input type="number" id="my-pension-round" class="my-numbers-input" placeholder="예: 306" min="1">
             </div>
-            <div class="my-numbers-field">
-              <label>조 (1~5)</label>
-              <input type="number" id="my-pension-group" class="my-numbers-input pension-group-input" placeholder="조" min="1" max="5">
+            <div class="my-batch-controls">
+              <button id="my-pension-add-row" class="btn-small">+ 행 추가</button>
+              <span id="my-pension-row-count">1/5</span>
             </div>
-            <div class="my-numbers-field numbers-field">
-              <label>6자리 번호</label>
-              <div class="my-numbers-inputs">
-                <input type="number" class="my-pension-digit-input" min="0" max="9" placeholder="0">
-                <input type="number" class="my-pension-digit-input" min="0" max="9" placeholder="0">
-                <input type="number" class="my-pension-digit-input" min="0" max="9" placeholder="0">
-                <input type="number" class="my-pension-digit-input" min="0" max="9" placeholder="0">
-                <input type="number" class="my-pension-digit-input" min="0" max="9" placeholder="0">
-                <input type="number" class="my-pension-digit-input" min="0" max="9" placeholder="0">
-              </div>
-            </div>
-            <button id="my-pension-save-btn" class="btn-primary my-save-btn">저장</button>
           </div>
+          <div id="my-pension-rows" class="my-batch-rows"></div>
+          <button id="my-pension-save-btn" class="btn-primary my-save-btn">저장</button>
         </div>
         <div id="my-pension-list" class="my-numbers-list"></div>
       </section>

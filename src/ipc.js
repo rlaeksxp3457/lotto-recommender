@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { app, dialog } = require("electron");
-const { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, EMBEDDED_DATA } = require("./analyzer");
+const { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, getRecentRecords, EMBEDDED_DATA } = require("./analyzer");
 
 let stats = null;
 let extraData = [];
@@ -74,6 +74,15 @@ function setupIpc(ipcMain, getWindow) {
       return { combinations: getNeverDrawn(stats, count || 5) };
     } catch (e) {
       return { error: `미출현 조합 추출 실패: ${e.message}` };
+    }
+  });
+
+  ipcMain.handle("get-history", async (_event, count) => {
+    if (!stats) return { error: "데이터가 로드되지 않았습니다." };
+    try {
+      return { records: getRecentRecords(stats.records, count || 50) };
+    } catch (e) {
+      return { error: `이력 조회 실패: ${e.message}` };
     }
   });
 

@@ -325,19 +325,47 @@ function strategyMarkov(stats) {
 
 const STRATEGIES = [
   { name: "빈도 가중 랜덤",     desc: "많이 나온 번호일수록 높은 확률",   fn: strategyFrequency,
-    howItWorks: ["전체 당첨 이력에서 1~45 각 번호의 출현 횟수를 집계합니다.", "출현 빈도가 높은 번호일수록 선택 확률을 높게 부여합니다.", "가중 확률에 따라 6개 번호를 랜덤 추출하고 합계·홀짝 유효성을 검증합니다."] },
+    howItWorks: [
+      { text: "전체 당첨 이력에서 1~45 각 번호의 출현 횟수를 집계합니다.", visual: "bars" },
+      { text: "출현 빈도가 높은 번호일수록 선택 확률을 높게 부여합니다.", visual: "weight" },
+      { text: "가중 확률에 따라 6개 번호를 랜덤 추출하고 합계·홀짝 유효성을 검증합니다.", visual: "pick" },
+    ] },
   { name: "핫/콜드 균형",       desc: "최근 핫 3개 + 오래된 3개 조합",     fn: strategyHotCold,
-    howItWorks: ["최근 50회에서 가장 많이 나온 핫(Hot) 번호 20개를 선별합니다.", "가장 오래 미출현된 콜드(Cold) 번호 20개를 선별합니다.", "핫 번호 3개 + 콜드 번호 3개를 조합하여 균형 잡힌 6개를 구성합니다."] },
+    howItWorks: [
+      { text: "최근 50회에서 가장 많이 나온 핫(Hot) 번호 20개를 선별합니다.", visual: "hotcold" },
+      { text: "가장 오래 미출현된 콜드(Cold) 번호 20개를 선별합니다.", visual: "merge" },
+      { text: "핫 번호 3개 + 콜드 번호 3개를 조합하여 균형 잡힌 6개를 구성합니다.", visual: "pick" },
+    ] },
   { name: "오래된 번호 우선",   desc: "오래 안 나온 번호 중심 선택",       fn: strategyOverdue,
-    howItWorks: ["각 번호가 마지막으로 당첨된 이후 경과 회차를 계산합니다.", "경과 회차가 긴 상위 20개 번호를 후보로 선정합니다.", "후보군에서 6개를 랜덤 추출하여 합계·균형 조건을 충족하는지 검증합니다."] },
+    howItWorks: [
+      { text: "각 번호가 마지막으로 당첨된 이후 경과 회차를 계산합니다.", visual: "clock" },
+      { text: "경과 회차가 긴 상위 20개 번호를 후보로 선정합니다.", visual: "sort" },
+      { text: "후보군에서 6개를 랜덤 추출하여 합계·균형 조건을 충족하는지 검증합니다.", visual: "pick" },
+    ] },
   { name: "빈출 쌍 기반",       desc: "자주 같이 나온 쌍을 씨드로 확장",   fn: strategyPairBased,
-    howItWorks: ["역대 당첨번호에서 동시에 출현한 번호 쌍의 빈도를 계산합니다.", "상위 30개 빈출 쌍 중 하나를 씨드(시작점)로 선택합니다.", "씨드 2개 번호에 빈도 가중 랜덤으로 4개를 추가하여 6개를 완성합니다."] },
+    howItWorks: [
+      { text: "역대 당첨번호에서 동시에 출현한 번호 쌍의 빈도를 계산합니다.", visual: "pair" },
+      { text: "상위 30개 빈출 쌍 중 하나를 씨드(시작점)로 선택합니다.", visual: "expand" },
+      { text: "씨드 2개 번호에 빈도 가중 랜덤으로 4개를 추가하여 6개를 완성합니다.", visual: "pick" },
+    ] },
   { name: "통계적 홀짝 균형",   desc: "홀3:짝3 + 저고 균형 유지",         fn: strategyStatistical,
-    howItWorks: ["1~45를 홀수 그룹과 짝수 그룹으로 분리합니다.", "각 그룹에서 빈도 가중치를 적용해 홀수 3개, 짝수 3개를 추출합니다.", "저번호(1~22)와 고번호(23~45) 균형을 추가로 검증하여 최종 확정합니다."] },
+    howItWorks: [
+      { text: "1~45를 홀수 그룹과 짝수 그룹으로 분리합니다.", visual: "split" },
+      { text: "각 그룹에서 빈도 가중치를 적용해 홀수 3개, 짝수 3개를 추출합니다.", visual: "balance" },
+      { text: "저번호(1~22)와 고번호(23~45) 균형을 추가로 검증하여 최종 확정합니다.", visual: "pick" },
+    ] },
   { name: "다중 윈도우 앙상블",  desc: "전체+최근 기간별 가중합 분석",      fn: strategyMultiWindow,
-    howItWorks: ["전체, 최근 200회, 100회, 50회 4개 기간의 출현 빈도를 산출합니다.", "기간이 짧을수록 높은 가중치를 부여하여 합산 점수를 계산합니다.", "합산 점수 기반 가중 확률로 6개 번호를 추출하고 유효성을 검증합니다."] },
+    howItWorks: [
+      { text: "전체, 최근 200회, 100회, 50회 4개 기간의 출현 빈도를 산출합니다.", visual: "layers" },
+      { text: "기간이 짧을수록 높은 가중치를 부여하여 합산 점수를 계산합니다.", visual: "merge" },
+      { text: "합산 점수 기반 가중 확률로 6개 번호를 추출하고 유효성을 검증합니다.", visual: "pick" },
+    ] },
   { name: "마르코프 체인 예측",  desc: "직전 회차 전이 확률 기반 예측",     fn: strategyMarkov,
-    howItWorks: ["직전 회차 당첨번호 6개 각각에 대해 전이 확률 행렬을 조회합니다.", "번호 A 다음에 번호 B가 출현할 확률을 합산하여 각 번호의 점수를 산정합니다.", "전이 점수 + 최근 빈도 보정 가중치로 6개 번호를 추출합니다."] },
+    howItWorks: [
+      { text: "직전 회차 당첨번호 6개 각각에 대해 전이 확률 행렬을 조회합니다.", visual: "chain" },
+      { text: "번호 A 다음에 번호 B가 출현할 확률을 합산하여 각 번호의 점수를 산정합니다.", visual: "score" },
+      { text: "전이 점수 + 최근 빈도 보정 가중치로 6개 번호를 추출합니다.", visual: "pick" },
+    ] },
 ];
 
 function getRecommendations(stats, count = 1) {
@@ -406,4 +434,15 @@ function getNeverDrawn(stats, count = 5) {
   return results;
 }
 
-module.exports = { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, EMBEDDED_DATA };
+// ─── 최근 기록 조회 ───
+
+function getRecentRecords(records, n = 50) {
+  return records.slice(-n).reverse().map(r => ({
+    round: r.round,
+    date: r.date,
+    numbers: r.numbers,
+    bonus: r.bonus,
+  }));
+}
+
+module.exports = { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, getRecentRecords, EMBEDDED_DATA };

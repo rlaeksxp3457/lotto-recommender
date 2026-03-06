@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld("api", {
   getRecommendations: (count) => ipcRenderer.invoke("get-recommendations", count),
   getTop5:            ()      => ipcRenderer.invoke("get-top5"),
   getNeverDrawn:      (count) => ipcRenderer.invoke("get-never-drawn", count),
+  getHistory:         (count) => ipcRenderer.invoke("get-history", count),
   updateData:         ()      => ipcRenderer.invoke("update-data"),
   uploadCsv:          ()      => ipcRenderer.invoke("upload-csv"),
   getAppVersion:      ()      => ipcRenderer.invoke("get-app-version"),

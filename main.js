@@ -149,9 +149,9 @@ app.whenReady().then(() => {
     }
   });
 
-  // 시작 3초 후 업데이트 확인
+  // 앱 시작 즉시 업데이트 확인
   if (updater) {
-    setTimeout(() => updater.checkForUpdates().catch(() => {}), 3000);
+    updater.checkForUpdates().catch(() => {});
   }
 });
 

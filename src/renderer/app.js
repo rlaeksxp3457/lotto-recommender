@@ -2,16 +2,17 @@
 
 import { state } from "./modules/state.js";
 import { showToast } from "./modules/utils.js";
-import { initTabs, setupCounter } from "./modules/tabs.js";
+import { initTabs, setupCounter, onTabChange } from "./modules/tabs.js";
 import { initTitlebar } from "./modules/titlebar.js";
 import { generateTop5 } from "./modules/top5.js";
 import { generateRecommendations } from "./modules/recommend.js";
 import { renderNeverDrawnInfo, generateNeverDrawn } from "./modules/neverdrawn.js";
 import { renderFrequencyChart, renderInsights } from "./modules/charts.js";
+import { renderLottoHistory } from "./modules/history.js";
 import { updateDataInfo, initUpdate } from "./modules/update.js";
 import { tutorial, initTutorial } from "./modules/tutorial.js";
 import { initPension, generatePensionTop5, generatePensionRecommendations } from "./modules/pension.js";
-import { initMyLotto, initMyPension } from "./modules/mynumbers.js";
+import { initMyLotto, initMyPension, refreshMyNumbers } from "./modules/mynumbers.js";
 
 // ── UI 초기화 ──
 initTitlebar();
@@ -33,6 +34,31 @@ document.getElementById("btn-pension-rec").addEventListener("click", () => gener
 
 initUpdate();
 
+// ── 후원 모달 ──
+(function initDonate() {
+  const btn = document.getElementById("btn-donate");
+  const modal = document.getElementById("donate-modal");
+  const closeBtn = document.getElementById("donate-close-btn");
+  const copyBtn = document.getElementById("donate-copy-btn");
+
+  btn.addEventListener("click", () => modal.classList.remove("hidden"));
+  closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) modal.classList.add("hidden");
+  });
+  copyBtn.addEventListener("click", () => {
+    navigator.clipboard.writeText("100038949476").then(() => {
+      showToast("계좌번호가 복사되었습니다.", "success");
+    });
+  });
+})();
+
+// 탭 전환 시 내 번호 목록 새로고침
+onTabChange((tab) => {
+  if (tab === "my-lotto") refreshMyNumbers("lotto");
+  else if (tab === "my-pension") refreshMyNumbers("pension");
+});
+
 // ── 데이터 로드 & 초기 렌더 ──
 
 async function init() {
@@ -48,6 +74,7 @@ async function init() {
   renderFrequencyChart();
   renderInsights();
   renderNeverDrawnInfo();
+  await renderLottoHistory();
   await generateTop5();
   await generateRecommendations(getRecCount);
 

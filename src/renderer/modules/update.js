@@ -146,46 +146,54 @@ export function initUpdate() {
 }
 
 function initAppUpdate() {
-  const banner = document.getElementById("update-banner");
-  if (!banner) return;
+  const modal = document.getElementById("update-modal");
+  if (!modal) return;
+
+  const titleEl = modal.querySelector(".update-modal-title");
+  const bodyEl = modal.querySelector(".update-modal-body");
+  const actionsEl = modal.querySelector(".update-modal-actions");
+
+  function showModal() { modal.classList.remove("hidden"); }
+  function hideModal() { modal.classList.add("hidden"); }
 
   window.api.onAppUpdate((data) => {
     switch (data.type) {
       case "available":
-        banner.innerHTML = `
-          <span>새 버전 v${data.version}이 있습니다!</span>
-          <button id="btn-download-update" class="update-banner-btn">다운로드</button>
-          <button id="btn-dismiss-update" class="update-banner-dismiss">&times;</button>
+        titleEl.textContent = "업데이트 알림";
+        bodyEl.innerHTML = `<p>새 버전 <b>v${data.version}</b>이 있습니다.</p><p>지금 다운로드하시겠습니까?</p>`;
+        actionsEl.innerHTML = `
+          <button id="btn-update-download" class="modal-btn tray">다운로드</button>
+          <button id="btn-update-later" class="modal-btn-cancel">나중에</button>
         `;
-        banner.classList.remove("hidden");
-        document.getElementById("btn-download-update").addEventListener("click", () => {
+        showModal();
+        document.getElementById("btn-update-download").addEventListener("click", () => {
           window.api.downloadUpdate();
-          banner.innerHTML = '<span>다운로드 중... <span id="update-percent">0</span>%</span>';
+          bodyEl.innerHTML = `<p>다운로드 중...</p><div class="update-progress-bar"><div class="update-progress-fill" id="update-fill" style="width:0%"></div></div><p class="update-pct" id="update-pct-label">0%</p>`;
+          actionsEl.innerHTML = "";
         });
-        document.getElementById("btn-dismiss-update").addEventListener("click", () => {
-          banner.classList.add("hidden");
-        });
+        document.getElementById("btn-update-later").addEventListener("click", hideModal);
         break;
       case "progress": {
-        const pctEl = document.getElementById("update-percent");
-        if (pctEl) pctEl.textContent = data.percent;
+        const fill = document.getElementById("update-fill");
+        const pctLabel = document.getElementById("update-pct-label");
+        if (fill) fill.style.width = `${data.percent}%`;
+        if (pctLabel) pctLabel.textContent = `${data.percent}%`;
         break;
       }
       case "error":
         console.warn("[auto-update]", data.message);
         break;
       case "downloaded":
-        banner.innerHTML = `
-          <span>업데이트 다운로드 완료!</span>
-          <button id="btn-install-update" class="update-banner-btn">지금 설치</button>
-          <button id="btn-later-update" class="update-banner-dismiss">&times;</button>
+        titleEl.textContent = "다운로드 완료";
+        bodyEl.innerHTML = `<p>업데이트 설치 후 앱이 재시작됩니다.</p>`;
+        actionsEl.innerHTML = `
+          <button id="btn-update-install" class="modal-btn tray">지금 설치</button>
+          <button id="btn-update-dismiss" class="modal-btn-cancel">나중에</button>
         `;
-        document.getElementById("btn-install-update").addEventListener("click", () => {
+        document.getElementById("btn-update-install").addEventListener("click", () => {
           window.api.installUpdate();
         });
-        document.getElementById("btn-later-update").addEventListener("click", () => {
-          banner.classList.add("hidden");
-        });
+        document.getElementById("btn-update-dismiss").addEventListener("click", hideModal);
         break;
     }
   });

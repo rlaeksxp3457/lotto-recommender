@@ -35,13 +35,10 @@ export function initTitlebar() {
 
   document.getElementById("modal-cancel").addEventListener("click", hideCloseModal);
 
-  // ESC로 모달 닫기
+  // ESC로 모든 모달 닫기
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
-      const modal = document.getElementById("close-modal");
-      if (!modal.classList.contains("hidden")) {
-        hideCloseModal();
-      }
+      document.querySelectorAll(".modal-overlay:not(.hidden)").forEach(m => m.classList.add("hidden"));
     }
   });
 

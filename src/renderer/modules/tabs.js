@@ -1,3 +1,10 @@
+// 탭 전환 콜백 등록용
+const tabChangeCallbacks = [];
+
+export function onTabChange(callback) {
+  tabChangeCallbacks.push(callback);
+}
+
 export function initTabs() {
   document.querySelectorAll(".nav-item[data-tab]").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -5,6 +12,7 @@ export function initTabs() {
       document.querySelectorAll(".tab-content").forEach(s => s.classList.remove("active"));
       btn.classList.add("active");
       document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+      tabChangeCallbacks.forEach(cb => cb(btn.dataset.tab));
     });
   });
 }
