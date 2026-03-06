@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════
-   Discord-style 로또 추천기 테마
+   Discord-style 로또 추천기 테마 v3
    ═══════════════════════════════════════ */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,6 +35,7 @@
   --ball-green:  #b0d840;
 
   --sidebar-w: 240px;
+  --titlebar-h: 32px;
   --radius: 8px;
 }
 
@@ -44,8 +45,122 @@ body {
   color: var(--text);
   height: 100vh;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ═══ 커스텀 타이틀바 ═══ */
+
+.titlebar {
+  height: var(--titlebar-h);
+  min-height: var(--titlebar-h);
+  background: var(--bg-darkest);
+  display: flex;
+  align-items: center;
+  -webkit-app-region: drag;
+  user-select: none;
+  border-bottom: 1px solid rgba(0,0,0,0.3);
+}
+
+.titlebar-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 10px;
+  color: #fff;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.titlebar-title {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 8px;
+  pointer-events: none;
+}
+
+.titlebar-controls {
+  display: flex;
+  margin-left: auto;
+  -webkit-app-region: no-drag;
+}
+
+.titlebar-btn {
+  width: 46px;
+  height: var(--titlebar-h);
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.titlebar-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-bright);
+}
+
+.titlebar-btn.close:hover {
+  background: var(--red);
+  color: #fff;
+}
+
+/* ═══ 업데이트 배너 ═══ */
+
+.update-banner {
+  background: var(--accent);
+  color: #fff;
+  padding: 6px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 32px;
+}
+
+.update-banner.hidden { display: none; }
+
+.update-banner-btn {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: none;
+  padding: 4px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.update-banner-btn:hover { background: rgba(255,255,255,0.3); }
+
+.update-banner-dismiss {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-size: 18px;
+  margin-left: auto;
+  padding: 0 4px;
+}
+
+.update-banner-dismiss:hover { color: #fff; }
+
+/* ═══ 앱 본체 (사이드바 + 콘텐츠) ═══ */
+
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 /* ─── 사이드바 ─── */
@@ -57,35 +172,6 @@ body {
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--bg-darkest);
-}
-
-.sidebar-header {
-  height: 48px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-bottom: 1px solid var(--bg-darkest);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
-.app-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 14px;
-  color: #fff;
-}
-
-.app-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-bright);
 }
 
 .sidebar-section-label {

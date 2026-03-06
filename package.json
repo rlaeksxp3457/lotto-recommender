@@ -1,9 +1,9 @@
 {
   "name": "lotto-recommender",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "로또 당첨번호 분석 및 추천 앱",
   "main": "main.js",
-  "author": "LottoApp",
+  "author": "rlaeksxp3457",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win",
@@ -13,6 +13,11 @@
     "appId": "com.lotto.recommender",
     "productName": "로또 추천기",
     "asar": true,
+    "publish": {
+      "provider": "github",
+      "owner": "rlaeksxp3457",
+      "repo": "lotto-recommender"
+    },
     "win": {
       "target": [
         {
@@ -53,6 +58,9 @@
       "output": "dist"
     },
     "afterPack": "./scripts/afterPack.js"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
   },
   "devDependencies": {
     "electron": "^35.0.0",
