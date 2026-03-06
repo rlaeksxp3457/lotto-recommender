@@ -60,6 +60,7 @@ export const tutorial = {
 
     if (!step.target) {
       // 화면 중앙 배치 (px 계산)
+      this.overlay.classList.add("no-target");
       const ttW = tt.offsetWidth || 360;
       const ttH = tt.offsetHeight || 200;
       tt.style.left = `${(window.innerWidth - ttW) / 2}px`;
@@ -68,6 +69,7 @@ export const tutorial = {
       return;
     }
 
+    this.overlay.classList.remove("no-target");
     const targetEl = document.querySelector(step.target);
     if (!targetEl) { this.highlight.style.display = "none"; return; }
 

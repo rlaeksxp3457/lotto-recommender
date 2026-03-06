@@ -992,12 +992,8 @@ body {
 
 .tutorial-overlay.hidden { display: none; }
 
-.tutorial-overlay::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
+.tutorial-overlay.no-target {
   background: rgba(0,0,0,0.75);
-  z-index: 0;
 }
 
 .tutorial-highlight {

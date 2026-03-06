@@ -16,14 +16,12 @@
 !macroend
 
 !macro customInstall
-  ; 바탕화면 바로가기에 커스텀 아이콘 명시적 적용
+  ; 바탕화면 바로가기 강제 재생성 (업데이트 시에도 올바른 아이콘 적용)
   SetShellVarContext current
-  IfFileExists "$DESKTOP\로또 추천기.lnk" 0 +2
-    CreateShortCut "$DESKTOP\로또 추천기.lnk" "$appExe" "" "$INSTDIR\resources\assets\icon.ico" 0
+  CreateShortCut "$DESKTOP\로또 추천기.lnk" "$appExe" "" "$INSTDIR\resources\assets\icon.ico" 0
 
-  SetShellVarContext all
-  IfFileExists "$DESKTOP\로또 추천기.lnk" 0 +2
-    CreateShortCut "$DESKTOP\로또 추천기.lnk" "$appExe" "" "$INSTDIR\resources\assets\icon.ico" 0
+  ; Windows 아이콘 캐시 초기화
+  nsExec::ExecToLog 'ie4uinit.exe -show'
 !macroend
 
 !macro customUnInit
