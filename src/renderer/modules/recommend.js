@@ -2,6 +2,82 @@ import { createBall, showToast } from "./utils.js";
 import { state } from "./state.js";
 import { createAnimatedAlgoDetail } from "./algo_anim.js";
 
+function renderBacktestSummary(container, type) {
+  const data = type === "lotto" ? state.lottoBacktest : state.pensionBacktest;
+
+  const wrap = document.createElement("div");
+  wrap.className = "backtest-summary";
+
+  if (!data) {
+    wrap.innerHTML = '<div class="backtest-loading">알고리즘 성능 분석 중...</div>';
+    container.appendChild(wrap);
+    // 완료 시 자동 갱신
+    const handler = (d) => {
+      if (d.type === type && d.results) {
+        // app.js 핸들러보다 먼저 실행될 수 있으므로 직접 state 설정
+        if (type === "lotto") state.lottoBacktest = d.results;
+        else state.pensionBacktest = d.results;
+        wrap.remove();
+        const newWrap = document.createElement("div");
+        newWrap.className = "backtest-summary";
+        const isL = type === "lotto";
+        const rl = isL ? "3개+ 확률" : "1자리+ 확률";
+        const rk = isL ? "over3Rate" : "over1Rate";
+        let h = `<div class="backtest-summary-title">최근 100회 백테스트 성능 (회당 20세트)</div>`;
+        h += `<table class="backtest-table"><thead><tr>
+          <th>#</th><th>알고리즘</th><th>평균 일치</th><th>${rl}</th><th>이론 대비</th>
+        </tr></thead><tbody>`;
+        d.results.forEach((r, i) => {
+          const rc = i < 3 ? ` backtest-rank-${i + 1}` : "";
+          const vc = r.vsTheory.startsWith("+") ? "backtest-vs-positive" : "backtest-vs-negative";
+          h += `<tr>
+            <td class="backtest-rank${rc}">${i + 1}</td>
+            <td class="backtest-name">${r.name}</td>
+            <td>${r.avgMatches.toFixed(2)}</td>
+            <td>${r[rk].toFixed(2)}%</td>
+            <td class="${vc}">${r.vsTheory}%</td>
+          </tr>`;
+        });
+        h += `</tbody></table>`;
+        newWrap.innerHTML = h;
+        // 추천 카드 앞에 삽입
+        const firstCard = container.querySelector(".rec-card");
+        if (firstCard) container.insertBefore(newWrap, firstCard);
+        else container.appendChild(newWrap);
+      }
+    };
+    window.api.onBacktestDone(handler);
+    return;
+  }
+
+  const isLotto = type === "lotto";
+  const rateLabel = isLotto ? "3개+ 확률" : "1자리+ 확률";
+  const rateKey = isLotto ? "over3Rate" : "over1Rate";
+
+  let html = `<div class="backtest-summary-title">최근 100회 백테스트 성능 (회당 20세트)</div>`;
+  html += `<table class="backtest-table"><thead><tr>
+    <th>#</th><th>알고리즘</th><th>평균 일치</th><th>${rateLabel}</th><th>이론 대비</th>
+  </tr></thead><tbody>`;
+
+  data.forEach((r, i) => {
+    const rankClass = i < 3 ? ` backtest-rank-${i + 1}` : "";
+    const vsClass = r.vsTheory.startsWith("+") ? "backtest-vs-positive" : "backtest-vs-negative";
+    html += `<tr>
+      <td class="backtest-rank${rankClass}">${i + 1}</td>
+      <td class="backtest-name">${r.name}</td>
+      <td>${r.avgMatches.toFixed(2)}</td>
+      <td>${r[rateKey].toFixed(2)}%</td>
+      <td class="${vsClass}">${r.vsTheory}%</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table>`;
+  wrap.innerHTML = html;
+  container.appendChild(wrap);
+}
+
+export { renderBacktestSummary };
+
 export async function generateRecommendations(getCount) {
   const btn = document.getElementById("btn-recommend");
   btn.disabled = true;
@@ -18,6 +94,9 @@ export async function generateRecommendations(getCount) {
     btn.textContent = "번호 추천받기";
     return;
   }
+
+  // 백테스트 결과 테이블
+  renderBacktestSummary(container, "lotto");
 
   result.recommendations.forEach((rec, idx) => {
     const card = document.createElement("div");

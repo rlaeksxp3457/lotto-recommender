@@ -1,7 +1,7 @@
 // ═══ 내 번호 관리 모듈 ═══
 
 import { state } from "./state.js";
-import { showToast, ballColor } from "./utils.js";
+import { showToast, ballColor, showConfirm } from "./utils.js";
 
 // ─── 유틸 ───
 
@@ -165,6 +165,7 @@ function updateRowLabels(container) {
 // ─── 로또 내 번호 탭 ───
 
 export async function initMyLotto() {
+  initFilter("lotto");
   const rowsContainer = document.getElementById("my-lotto-rows");
   const addBtn = document.getElementById("my-lotto-add-row");
   const countLabel = document.getElementById("my-lotto-row-count");
@@ -230,9 +231,10 @@ export async function initMyLotto() {
       allNumbers.push(numbers);
     }
 
+    const batchId = "batch_" + Date.now();
     let saved = 0;
     for (const numbers of allNumbers) {
-      const result = await window.api.myNumbersSave({ type: "lotto", round, numbers });
+      const result = await window.api.myNumbersSave({ type: "lotto", round, numbers, batchId });
       if (result.error) {
         showToast(result.error, "error");
       } else {
@@ -255,6 +257,7 @@ export async function initMyLotto() {
 // ─── 연금복권 내 번호 탭 ───
 
 export async function initMyPension() {
+  initFilter("pension");
   const rowsContainer = document.getElementById("my-pension-rows");
   const addBtn = document.getElementById("my-pension-add-row");
   const countLabel = document.getElementById("my-pension-row-count");
@@ -322,10 +325,11 @@ export async function initMyPension() {
       allEntries.push({ group, digits });
     }
 
+    const batchId = "batch_" + Date.now();
     let saved = 0;
     for (const entry of allEntries) {
       const result = await window.api.myNumbersSave({
-        type: "pension", round, group: entry.group, digits: entry.digits,
+        type: "pension", round, group: entry.group, digits: entry.digits, batchId,
       });
       if (result.error) {
         showToast(result.error, "error");
@@ -352,20 +356,110 @@ export async function refreshMyNumbers(type) {
   await loadAndRenderMyNumbers(type);
 }
 
-async function loadAndRenderMyNumbers(type) {
-  const result = await window.api.myNumbersLoad();
-  if (result.error) {
-    showToast(result.error, "error");
-    return;
-  }
+// 필터 + 내보내기/가져오기 이벤트 등록
+export function initFilter(type) {
+  const prefix = type === "lotto" ? "my-lotto" : "my-pension";
+  document.getElementById(`${prefix}-filter`).addEventListener("change", () => loadAndRenderMyNumbers(type));
 
-  state.myNumbers = result.numbers;
-  const filtered = result.numbers.filter(n => n.type === type);
-  const containerId = type === "lotto" ? "my-lotto-list" : "my-pension-list";
-  renderMyNumbersList(filtered, containerId, type);
+  document.getElementById(`${prefix}-export-btn`).addEventListener("click", async () => {
+    const result = await window.api.myNumbersExport();
+    if (result.canceled) return;
+    if (result.error) { showToast(result.error, "error"); return; }
+    showToast(`${result.count}개 번호를 내보냈습니다.`, "success");
+  });
+
+  document.getElementById(`${prefix}-import-btn`).addEventListener("click", async () => {
+    const result = await window.api.myNumbersImport();
+    if (result.canceled) return;
+    if (result.error) { showToast(result.error, "error"); return; }
+    showToast(`${result.imported}개 번호를 가져왔습니다.${result.skipped > 0 ? ` (중복 ${result.skipped}개 건너뜀)` : ""}`, "success");
+    await loadAndRenderMyNumbers("lotto");
+    await loadAndRenderMyNumbers("pension");
+  });
 }
 
-function renderMyNumbersList(items, containerId, type) {
+async function loadAndRenderMyNumbers(type) {
+  const result = await window.api.myNumbersLoad();
+  if (result.error) { showToast(result.error, "error"); return; }
+
+  state.myNumbers = result.numbers;
+  const allOfType = result.numbers.filter(n => n.type === type);
+
+  // 필터 드롭다운 갱신
+  const filterId = type === "lotto" ? "my-lotto-filter" : "my-pension-filter";
+  const filterEl = document.getElementById(filterId);
+  const prev = filterEl.value;
+  const rounds = [...new Set(allOfType.map(n => n.round))].sort((a, b) => b - a);
+  filterEl.innerHTML = '<option value="all">전체 회차</option>';
+  for (const r of rounds) {
+    const opt = document.createElement("option");
+    opt.value = r;
+    opt.textContent = `${r}회`;
+    filterEl.appendChild(opt);
+  }
+  if (rounds.includes(parseInt(prev))) filterEl.value = prev;
+
+  // 필터 적용
+  const sel = filterEl.value;
+  const displayed = sel === "all" ? allOfType : allOfType.filter(n => n.round === parseInt(sel));
+
+  const containerId = type === "lotto" ? "my-lotto-list" : "my-pension-list";
+  renderTicketList(displayed, containerId, type);
+}
+
+// 드래그 상태 (dragover에서 dataTransfer 읽기 불가하므로 모듈 레벨 변수 사용)
+let dragState = null;
+
+function groupByBatch(items) {
+  const batchMap = {};
+  const legacyByRound = {};
+
+  for (const item of items) {
+    if (item.batchId) {
+      if (!batchMap[item.batchId]) batchMap[item.batchId] = [];
+      batchMap[item.batchId].push(item);
+    } else {
+      if (!legacyByRound[item.round]) legacyByRound[item.round] = [];
+      legacyByRound[item.round].push(item);
+    }
+  }
+
+  const result = [];
+
+  // batchId가 있는 엔트리
+  for (const [batchId, entries] of Object.entries(batchMap)) {
+    result.push({
+      round: entries[0].round,
+      batchId,
+      entries: entries.sort((a, b) => parseInt(a.id) - parseInt(b.id)),
+    });
+  }
+
+  // 레거시 (batchId 없음): round별 5개씩 분리 (기존 batchId와 충돌 방지)
+  for (const [round, entries] of Object.entries(legacyByRound)) {
+    const sorted = entries.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+    let idx = 0;
+    for (let i = 0; i < sorted.length; i += 5) {
+      let legacyId = `legacy_${round}_${idx}`;
+      while (batchMap[legacyId]) { idx++; legacyId = `legacy_${round}_${idx}`; }
+      result.push({
+        round: parseInt(round),
+        batchId: legacyId,
+        entries: sorted.slice(i, i + 5),
+      });
+      idx++;
+    }
+  }
+
+  // 회차 내림차순, 같은 회차면 첫 엔트리 ID 기준
+  result.sort((a, b) => {
+    if (b.round !== a.round) return b.round - a.round;
+    return parseInt(b.entries[0].id) - parseInt(a.entries[0].id);
+  });
+  return result;
+}
+
+function renderTicketList(items, containerId, type) {
   const container = document.getElementById(containerId);
   container.innerHTML = "";
 
@@ -374,112 +468,299 @@ function renderMyNumbersList(items, containerId, type) {
     return;
   }
 
-  // 최신순 정렬
-  const sorted = [...items].sort((a, b) => parseInt(b.id) - parseInt(a.id));
+  const groups = groupByBatch(items);
+  const isPension = type === "pension";
 
-  sorted.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "my-number-card";
+  for (const group of groups) {
+    const ticket = document.createElement("div");
+    ticket.className = "my-ticket";
+    ticket.dataset.batchId = group.batchId;
+    ticket.dataset.round = group.round;
 
-    // 헤더
+    // ── 티켓 드롭 존 (행 또는 용지를 받을 수 있음) ──
+    function canDrop() {
+      if (!dragState) return false;
+      if (String(dragState.round) !== String(group.round)) return false;
+      if (dragState.batchId === group.batchId) return false;
+      return group.entries.length + dragState.entryCount <= 5;
+    }
+    function isDifferentBatch() {
+      return dragState && dragState.batchId !== group.batchId;
+    }
+    ticket.addEventListener("dragenter", (e) => {
+      if (isDifferentBatch()) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        if (canDrop()) ticket.classList.add("drop-target");
+      }
+    });
+    ticket.addEventListener("dragover", (e) => {
+      if (isDifferentBatch()) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        if (canDrop()) ticket.classList.add("drop-target");
+      }
+    });
+    ticket.addEventListener("dragleave", (e) => {
+      if (!ticket.contains(e.relatedTarget)) ticket.classList.remove("drop-target");
+    });
+    ticket.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      ticket.classList.remove("drop-target");
+      if (!canDrop()) {
+        if (dragState) {
+          if (String(dragState.round) !== String(group.round)) {
+            showToast("같은 회차의 용지끼리만 합칠 수 있습니다.", "error");
+          } else if (group.entries.length + dragState.entryCount > 5) {
+            showToast("한 용지에 최대 5개까지만 가능합니다.", "error");
+          }
+        }
+        return;
+      }
+      // 드래그 항목 + 대상 용지의 기존 항목 모두 같은 batchId로 통합
+      const allIds = [...dragState.entryIds, ...group.entries.map(e => e.id)];
+      const targetBatchId = group.batchId.startsWith("legacy_") ? "batch_" + Date.now() : group.batchId;
+      const res = await window.api.myNumbersUpdateBatch({ entryIds: allIds, newBatchId: targetBatchId });
+      if (res.error) { showToast(res.error, "error"); return; }
+      showToast("용지가 합쳐졌습니다.", "success");
+      dragState = null;
+      await loadAndRenderMyNumbers(type);
+    });
+
+    // ── 헤더 ──
     const header = document.createElement("div");
-    header.className = "my-number-card-header";
-    header.innerHTML = `
-      <span class="my-number-round">${item.round}회</span>
-      <span class="my-number-date">${item.createdAt}</span>
-    `;
+    header.className = `my-ticket-header${isPension ? " pension" : ""}`;
+    const dateStr = group.entries[0].createdAt || "";
+    header.innerHTML = `<span class="my-ticket-round">${group.round}회</span><span class="my-ticket-date">${dateStr}</span>`;
+    ticket.appendChild(header);
 
-    // 번호 표시
-    const numbersWrap = document.createElement("div");
-    numbersWrap.className = "my-number-balls";
+    // ── 당첨번호 행 ──
+    const checkedEntry = group.entries.find(e => e.result && e.result.rank !== undefined);
+    if (checkedEntry) {
+      const winRow = document.createElement("div");
+      winRow.className = "my-ticket-win-row";
+      const winLabel = document.createElement("span");
+      winLabel.className = "my-ticket-win-label";
+      winLabel.textContent = "당첨번호";
+      winRow.appendChild(winLabel);
+      const winBalls = document.createElement("div");
+      winBalls.className = "my-ticket-win-balls";
 
-    if (type === "lotto") {
-      item.numbers.forEach(n => numbersWrap.appendChild(createLottoBall(n)));
-    } else {
-      numbersWrap.appendChild(createPensionDigit(item.group, 0));
-      const sep = document.createElement("span");
-      sep.className = "pension-group-sep";
-      sep.textContent = "|";
-      numbersWrap.appendChild(sep);
-      item.digits.forEach((d, i) => numbersWrap.appendChild(createPensionDigit(d, i + 1)));
+      if (type === "lotto" && checkedEntry.result.winNumbers) {
+        checkedEntry.result.winNumbers.forEach(n => winBalls.appendChild(createLottoBall(n)));
+        if (checkedEntry.result.bonusNo) {
+          const plus = document.createElement("span");
+          plus.className = "bonus-plus";
+          plus.textContent = "+";
+          winBalls.appendChild(plus);
+          const bonusBall = createLottoBall(checkedEntry.result.bonusNo);
+          bonusBall.classList.add("bonus-ball");
+          winBalls.appendChild(bonusBall);
+        }
+      } else if (type === "pension" && checkedEntry.result.winDigits) {
+        const tag = document.createElement("span");
+        tag.className = "pension-group-tag";
+        tag.textContent = `${checkedEntry.result.winGroup}조`;
+        winBalls.appendChild(tag);
+        checkedEntry.result.winDigits.forEach((d, i) => {
+          const digit = document.createElement("span");
+          digit.className = `pension-digit pos-${i + 1}`;
+          digit.textContent = d;
+          winBalls.appendChild(digit);
+        });
+      }
+      winRow.appendChild(winBalls);
+      ticket.appendChild(winRow);
     }
 
-    // 액션 버튼
-    const actions = document.createElement("div");
-    actions.className = "my-number-actions";
+    // ── 게임 행 ──
+    const gamesWrap = document.createElement("div");
+    gamesWrap.className = "my-ticket-games";
 
-    // 당첨 확인 버튼
-    const checkBtn = document.createElement("button");
-    checkBtn.className = "my-number-check-btn";
-    checkBtn.textContent = "당첨 확인";
-    checkBtn.addEventListener("click", async () => {
-      checkBtn.disabled = true;
-      checkBtn.innerHTML = '<span class="spinner"></span>';
+    group.entries.forEach((item, idx) => {
+      const row = document.createElement("div");
+      row.className = "my-ticket-game";
+      row.draggable = true;
+      row.dataset.entryId = item.id;
 
-      const api = type === "lotto" ? window.api.myNumbersCheckLotto : window.api.myNumbersCheckPension;
-      const res = await api(item.id);
+      // 행 드래그 시작
+      row.addEventListener("dragstart", (e) => {
+        e.stopPropagation();
+        dragState = {
+          batchId: group.batchId,
+          round: group.round,
+          entryIds: [item.id],
+          entryCount: 1,
+          isRow: true,
+        };
+        e.dataTransfer.setData("text/plain", "row");
+        e.dataTransfer.effectAllowed = "move";
+        row.classList.add("dragging-row");
+      });
+      row.addEventListener("dragend", () => {
+        row.classList.remove("dragging-row");
+        dragState = null;
+        container.querySelectorAll(".drop-target").forEach(el => el.classList.remove("drop-target"));
+      });
 
-      if (res.error) {
-        showToast(res.error, "error");
-        checkBtn.disabled = false;
-        checkBtn.textContent = "당첨 확인";
-        return;
-      }
+      const label = document.createElement("div");
+      label.className = "my-ticket-label";
+      label.textContent = String.fromCharCode(65 + idx);
 
-      showToast(`${item.round}회 결과: ${res.result.label}`, res.result.rank > 0 ? "success" : "info");
-      await loadAndRenderMyNumbers(type);
-    });
+      const balls = document.createElement("div");
+      balls.className = "my-ticket-balls";
 
-    // 삭제 버튼
-    const delBtn = document.createElement("button");
-    delBtn.className = "my-number-del-btn";
-    delBtn.innerHTML = "✕";
-    delBtn.title = "삭제";
-    delBtn.addEventListener("click", async () => {
-      const res = await window.api.myNumbersDelete(item.id);
-      if (res.error) {
-        showToast(res.error, "error");
-        return;
-      }
-      showToast("삭제되었습니다.", "info");
-      await loadAndRenderMyNumbers(type);
-    });
-
-    actions.appendChild(checkBtn);
-    actions.appendChild(delBtn);
-
-    card.appendChild(header);
-    card.appendChild(numbersWrap);
-
-    // 결과 표시
-    if (item.result && item.result.rank !== undefined) {
-      const resultEl = document.createElement("div");
-      resultEl.className = `my-number-result ${rankClass(item.result.rank)}`;
+      const hasResult = item.result && item.result.rank !== undefined;
 
       if (type === "lotto") {
-        resultEl.innerHTML = `
-          <span class="result-rank">${item.result.label}</span>
-          <span class="result-detail">${item.result.matchCount}개 일치${item.result.bonus ? " + 보너스" : ""}</span>
-          <div class="result-win-numbers">
-            당첨번호: ${item.result.winNumbers.map(n => `<span class="mini-ball ${ballColor(n)}">${n}</span>`).join("")}
-            <span class="bonus-separator">+</span>
-            <span class="mini-ball bonus">${item.result.bonusNo}</span>
-            <span class="bonus-label">보너스</span>
-          </div>
-          ${buildPrizeInfoHtml(item.result.prizeInfo, item.result.rank)}
-        `;
+        const winSet = hasResult ? new Set(item.result.winNumbers) : null;
+        const is2nd = hasResult && item.result.rank === 2;
+        const bonusNo = hasResult ? item.result.bonusNo : null;
+        item.numbers.forEach(n => {
+          const ball = createLottoBall(n);
+          if (hasResult) {
+            if (winSet.has(n)) { /* 일치 */ }
+            else if (is2nd && n === bonusNo) ball.classList.add("ball-bonus-hit");
+            else ball.classList.add("ball-miss");
+          }
+          balls.appendChild(ball);
+        });
       } else {
-        const winDisplay = `${item.result.winGroup}조 ${item.result.winDigits.join("")}`;
-        resultEl.innerHTML = `
-          <span class="result-rank">${item.result.label}</span>
-          <span class="result-detail">${item.result.matchDigits}자리 일치${item.result.groupMatch ? " (조 일치)" : ""}</span>
-          <div class="result-win-numbers">당첨번호: ${winDisplay}</div>
-        `;
+        const tag = document.createElement("span");
+        const groupMatch = hasResult ? item.result.groupMatch : false;
+        tag.className = `pension-group-tag${hasResult && !groupMatch ? " tag-miss" : ""}`;
+        tag.textContent = `${item.group}조`;
+        balls.appendChild(tag);
+        item.digits.forEach((d, i) => {
+          const digit = document.createElement("span");
+          const digitMatch = hasResult && item.result.winDigits ? item.result.winDigits[i] === d : false;
+          digit.className = `pension-digit pos-${i + 1}${hasResult && !digitMatch ? " digit-miss" : ""}`;
+          digit.textContent = d;
+          balls.appendChild(digit);
+        });
       }
-      card.appendChild(resultEl);
+
+      // 결과 배지
+      const badgeWrap = document.createElement("div");
+      badgeWrap.className = "my-ticket-badge-wrap";
+      const badge = document.createElement("span");
+      if (hasResult) {
+        badge.className = `my-ticket-badge ${rankClass(item.result.rank)}`;
+        badge.textContent = item.result.label;
+        const detail = document.createElement("span");
+        detail.className = "my-ticket-match-detail";
+        if (type === "lotto") {
+          detail.textContent = `${item.result.matchCount}개 일치${item.result.bonus ? " +보너스" : ""}`;
+        } else {
+          detail.textContent = `${item.result.matchDigits}자리 일치`;
+        }
+        badgeWrap.appendChild(badge);
+        badgeWrap.appendChild(detail);
+      } else {
+        badge.className = "my-ticket-badge unchecked";
+        badge.textContent = "미확인";
+        badgeWrap.appendChild(badge);
+      }
+
+      // 행 삭제 버튼
+      const rowDel = document.createElement("button");
+      rowDel.className = "my-ticket-row-del";
+      rowDel.textContent = "✕";
+      rowDel.title = "이 행 삭제";
+      rowDel.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (!await showConfirm(`${String.fromCharCode(65 + idx)}행을 삭제하시겠습니까?`)) return;
+        await window.api.myNumbersDelete(item.id);
+        showToast("삭제되었습니다.", "info");
+        await loadAndRenderMyNumbers(type);
+      });
+
+      row.appendChild(label);
+      row.appendChild(balls);
+      row.appendChild(badgeWrap);
+      row.appendChild(rowDel);
+      gamesWrap.appendChild(row);
+    });
+    ticket.appendChild(gamesWrap);
+
+    // ── 푸터 ──
+    const footer = document.createElement("div");
+    footer.className = "my-ticket-footer";
+
+    const allChecked = group.entries.every(e => e.result && e.result.rank !== undefined);
+    const prizeLabel = document.createElement("span");
+    prizeLabel.className = "my-ticket-prize";
+    if (allChecked) {
+      const total = calcTicketPrize(group.entries);
+      prizeLabel.textContent = total > 0 ? `당첨금: ${formatAmount(total)}` : "미당첨";
+      if (total > 0) prizeLabel.classList.add("has-prize");
     }
 
-    card.appendChild(actions);
-    container.appendChild(card);
-  });
+    const actions = document.createElement("div");
+    actions.className = "my-ticket-actions";
+
+    const anyUnchecked = group.entries.some(e => !e.result || e.result.rank === undefined);
+    if (anyUnchecked) {
+      const checkBtn = document.createElement("button");
+      checkBtn.className = `my-ticket-check-btn${isPension ? " pension" : ""}`;
+      checkBtn.textContent = "당첨 확인";
+      checkBtn.addEventListener("click", () => batchCheck(group.entries, type, checkBtn));
+      actions.appendChild(checkBtn);
+    }
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "my-ticket-del-btn";
+    delBtn.textContent = "용지 삭제";
+    delBtn.addEventListener("click", async () => {
+      if (!await showConfirm(`${group.round}회 용지 전체(${group.entries.length}행)를 삭제하시겠습니까?`)) return;
+      batchDelete(group.entries, type);
+    });
+    actions.appendChild(delBtn);
+
+    footer.appendChild(prizeLabel);
+    footer.appendChild(actions);
+    ticket.appendChild(footer);
+
+    container.appendChild(ticket);
+  }
+}
+
+function calcTicketPrize(entries) {
+  let total = 0;
+  for (const e of entries) {
+    if (e.result && e.result.rank > 0 && e.result.prizeInfo) {
+      const p = e.result.prizeInfo.prizes.find(p => p.rank === e.result.rank);
+      if (p) total += p.amount;
+    }
+  }
+  return total;
+}
+
+async function batchCheck(entries, type, btn) {
+  btn.disabled = true;
+  btn.textContent = "확인 중...";
+  const api = type === "lotto" ? window.api.myNumbersCheckLotto : window.api.myNumbersCheckPension;
+
+  for (const entry of entries) {
+    if (entry.result && entry.result.rank !== undefined) continue;
+    const res = await api(entry.id);
+    if (res.error) {
+      showToast(res.error, "error");
+      btn.disabled = false;
+      btn.textContent = "당첨 확인";
+      return;
+    }
+  }
+
+  showToast(`${entries[0].round}회 당첨 결과를 확인했습니다.`, "info");
+  await loadAndRenderMyNumbers(type);
+}
+
+async function batchDelete(entries, type) {
+  for (const entry of entries) {
+    await window.api.myNumbersDelete(entry.id);
+  }
+  showToast("삭제되었습니다.", "info");
+  await loadAndRenderMyNumbers(type);
 }

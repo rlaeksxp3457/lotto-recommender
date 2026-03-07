@@ -82,6 +82,15 @@ function setupPensionIpc(ipcMain, getWindow) {
     }
   });
 
+  ipcMain.handle("pension-get-advanced-analysis", async (_event, recentN) => {
+    if (!stats) return { error: "연금복권 데이터가 로드되지 않았습니다." };
+    try {
+      return { analysis: stats.getAdvancedAnalysis(recentN || 20) };
+    } catch (e) {
+      return { error: `고급 분석 실패: ${e.message}` };
+    }
+  });
+
   ipcMain.handle("pension-update-data", async () => {
     if (!stats) return { error: "연금복권 데이터가 로드되지 않았습니다." };
 

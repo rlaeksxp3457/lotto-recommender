@@ -1,6 +1,6 @@
 const fs = require("fs");
 const path = require("path");
-const { app } = require("electron");
+const { app, dialog } = require("electron");
 const { EMBEDDED_DATA: LOTTO_EMBEDDED } = require("./analyzer");
 const { EMBEDDED_DATA: PENSION_EMBEDDED } = require("./pension_analyzer");
 const EMBEDDED_PRIZE = require("./prize_data");
@@ -103,6 +103,7 @@ function setupMyNumbersIpc(ipcMain) {
         id: String(Date.now()) + String(Math.floor(Math.random() * 1000)).padStart(3, "0"),
         type: ticket.type,
         round: ticket.round,
+        batchId: ticket.batchId || null,
         createdAt: new Date().toISOString().split("T")[0],
         result: null,
       };
@@ -202,6 +203,71 @@ function setupMyNumbersIpc(ipcMain) {
       return { success: true, result };
     } catch (e) {
       return { error: `당첨 확인 실패: ${e.message}` };
+    }
+  });
+  // 배치 ID 업데이트 (용지 병합)
+  ipcMain.handle("my-numbers-update-batch", async (_event, { entryIds, newBatchId }) => {
+    try {
+      const data = loadMyNumbers();
+      for (const entry of data) {
+        if (entryIds.includes(entry.id)) entry.batchId = newBatchId;
+      }
+      saveMyNumbers(data);
+      return { success: true };
+    } catch (e) {
+      return { error: `배치 업데이트 실패: ${e.message}` };
+    }
+  });
+
+  // 내 번호 내보내기
+  ipcMain.handle("my-numbers-export", async () => {
+    try {
+      const data = loadMyNumbers();
+      if (data.length === 0) return { error: "내보낼 데이터가 없습니다." };
+
+      const result = await dialog.showSaveDialog({
+        title: "내 번호 내보내기",
+        defaultPath: `my_numbers_${new Date().toISOString().split("T")[0]}.json`,
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      });
+      if (result.canceled) return { canceled: true };
+
+      const exportData = { version: 1, exportedAt: new Date().toISOString(), entries: data };
+      fs.writeFileSync(result.filePath, JSON.stringify(exportData, null, 2), "utf-8");
+      return { success: true, count: data.length };
+    } catch (e) {
+      return { error: `내보내기 실패: ${e.message}` };
+    }
+  });
+
+  // 내 번호 가져오기
+  ipcMain.handle("my-numbers-import", async () => {
+    try {
+      const result = await dialog.showOpenDialog({
+        title: "내 번호 가져오기",
+        filters: [{ name: "JSON", extensions: ["json"] }],
+        properties: ["openFile"],
+      });
+      if (result.canceled) return { canceled: true };
+
+      const raw = fs.readFileSync(result.filePaths[0], "utf-8");
+      const imported = JSON.parse(raw);
+      const entries = Array.isArray(imported) ? imported : (imported.entries || []);
+
+      const valid = entries.filter(e =>
+        e.id && e.type && e.round &&
+        (e.type === "lotto" ? Array.isArray(e.numbers) : (e.group !== undefined && Array.isArray(e.digits)))
+      );
+      if (valid.length === 0) return { error: "유효한 번호 데이터가 없습니다." };
+
+      const existing = loadMyNumbers();
+      const existingIds = new Set(existing.map(e => e.id));
+      const newEntries = valid.filter(e => !existingIds.has(e.id));
+
+      saveMyNumbers([...existing, ...newEntries]);
+      return { success: true, imported: newEntries.length, skipped: valid.length - newEntries.length };
+    } catch (e) {
+      return { error: `가져오기 실패: ${e.message}` };
     }
   });
 }

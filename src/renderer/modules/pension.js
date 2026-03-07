@@ -3,6 +3,7 @@
 import { state } from "./state.js";
 import { showToast, fmt } from "./utils.js";
 import { createAnimatedAlgoDetail } from "./algo_anim.js";
+import { renderBacktestSummary } from "./recommend.js";
 
 // ─── 유틸: 숫자 박스 생성 ───
 
@@ -246,6 +247,9 @@ export async function generatePensionRecommendations(getCount) {
     btn.textContent = "번호 추천받기";
     return;
   }
+
+  // 백테스트 결과 테이블
+  renderBacktestSummary(container, "pension");
 
   result.recommendations.forEach((rec, idx) => {
     const card = document.createElement("div");

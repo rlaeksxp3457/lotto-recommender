@@ -321,6 +321,81 @@ function strategyMarkov(stats) {
   return randomSample(POOL, 6);
 }
 
+/** 전략 8: 후나츠 사카이 — 출현 주기 비율 기반 */
+function strategyFunatsu(stats) {
+  const gapData = [];
+  for (let num = 1; num <= 45; num++) {
+    const appearances = [];
+    for (const r of stats.records)
+      if (r.numbers.includes(num)) appearances.push(r.round);
+    const gaps = [];
+    for (let i = 1; i < appearances.length; i++) gaps.push(appearances[i] - appearances[i - 1]);
+    const avgGap = gaps.length > 0 ? gaps.reduce((a, b) => a + b, 0) / gaps.length : 0;
+    const currentGap = stats.lastSeen[num];
+    const ratio = avgGap > 0 ? currentGap / avgGap : 0;
+    gapData.push({ num, ratio });
+  }
+  gapData.sort((a, b) => b.ratio - a.ratio);
+  // 비율 상위 20개 후보
+  const candidates = gapData.slice(0, 20).map(g => g.num);
+  const weights = candidates.map((_, i) => 20 - i);
+  for (let t = 0; t < 2000; t++) {
+    const chosen = [...new Set(weightedSample(candidates, weights, 8))].slice(0, 6).sort((a, b) => a - b);
+    if (chosen.length === 6 && isValid(chosen, stats)) return chosen;
+  }
+  return randomSample(POOL, 6);
+}
+
+/** 전략 9: AC값 + 끝수 균형 — AC 7~10 보장 + 끝수 다양성 */
+function strategyACEnding(stats) {
+  const weights = POOL.map(n =>
+    stats.freq[n] * 1.0 + stats.recent50[n] * 3.0
+  );
+  for (let t = 0; t < 3000; t++) {
+    const raw = weightedSample(POOL, weights, 10);
+    const chosen = [...new Set(raw)].slice(0, 6).sort((a, b) => a - b);
+    if (chosen.length !== 6 || !isValid(chosen, stats)) continue;
+    const ac = computeAC(chosen);
+    if (ac < 7) continue; // AC 7 이상만 허용
+    const endings = new Set(chosen.map(n => n % 10));
+    if (endings.size < 4) continue; // 끝수 4종류 이상
+    return chosen;
+  }
+  return randomSample(POOL, 6);
+}
+
+/** 전략 10: 번호대 균형 + 연번 — 5구간 분산 + 연번 0~1쌍 */
+function strategyRangeConsec(stats) {
+  const ranges = [[1, 10], [11, 20], [21, 30], [31, 40], [41, 45]];
+  const rangePool = ranges.map(([lo, hi]) => POOL.filter(n => n >= lo && n <= hi));
+  for (let t = 0; t < 3000; t++) {
+    // 5구간 중 4~5구간에서 최소 1개씩 추출
+    const usedRanges = [...Array(5).keys()];
+    // 랜덤으로 4~5구간 선택
+    const nRanges = Math.random() < 0.5 ? 5 : 4;
+    const selected = randomSample(usedRanges, nRanges);
+    const picks = [];
+    for (const ri of selected) {
+      const pool = rangePool[ri];
+      const w = pool.map(n => stats.freq[n] + stats.recent50[n] * 2);
+      const pick = weightedSample(pool, w, 1);
+      picks.push(...pick);
+    }
+    // 나머지 번호 채우기
+    const remaining = POOL.filter(n => !picks.includes(n));
+    const rw = remaining.map(n => stats.freq[n] || 1);
+    const extras = weightedSample(remaining, rw, 6);
+    const chosen = [...new Set([...picks, ...extras])].slice(0, 6).sort((a, b) => a - b);
+    if (chosen.length !== 6 || !isValid(chosen, stats)) continue;
+    // 연번 쌍 0~1개만 허용
+    let consec = 0;
+    for (let i = 1; i < chosen.length; i++) if (chosen[i] - chosen[i - 1] === 1) consec++;
+    if (consec > 1) continue;
+    return chosen;
+  }
+  return randomSample(POOL, 6);
+}
+
 // ─── 추천 결과 생성 ───
 
 const STRATEGIES = [
@@ -366,6 +441,24 @@ const STRATEGIES = [
       { text: "번호 A 다음에 번호 B가 출현할 확률을 합산하여 각 번호의 점수를 산정합니다.", visual: "score" },
       { text: "전이 점수 + 최근 빈도 보정 가중치로 6개 번호를 추출합니다.", visual: "pick" },
     ] },
+  { name: "후나츠 사카이",      desc: "출현 주기 비율 기반 예측",         fn: strategyFunatsu,
+    howItWorks: [
+      { text: "각 번호의 역대 출현 간격(평균 주기)을 산출합니다.", visual: "gapRatio" },
+      { text: "현재 미출현 간격 ÷ 평균 주기 = 비율을 계산하여 순위를 매깁니다.", visual: "score" },
+      { text: "비율이 높은 상위 20개 후보에서 6개를 가중 추출합니다.", visual: "pick" },
+    ] },
+  { name: "AC값 + 끝수 균형",   desc: "AC 7~10 보장 + 끝수 4종 이상",   fn: strategyACEnding,
+    howItWorks: [
+      { text: "빈도 + 최근 핫 번호에 가중치를 두어 후보를 추출합니다.", visual: "acValue" },
+      { text: "AC값이 7~10 범위인지 검증합니다 (산술 복잡도).", visual: "filter" },
+      { text: "끝수(일의 자리) 4종류 이상 다양한 조합만 통과시킵니다.", visual: "pick" },
+    ] },
+  { name: "번호대 + 연번 최적화", desc: "5구간 분산 + 연번 0~1쌍 제한",    fn: strategyRangeConsec,
+    howItWorks: [
+      { text: "1~45를 5개 구간으로 나눠 4~5구간에서 최소 1개씩 추출합니다.", visual: "rangeGrid" },
+      { text: "빈도 가중치로 나머지 번호를 채워 6개를 완성합니다.", visual: "balance" },
+      { text: "연속번호 쌍이 0~1개인 조합만 통과시킵니다.", visual: "pick" },
+    ] },
 ];
 
 function getRecommendations(stats, count = 1) {
@@ -383,9 +476,9 @@ function getRecommendations(stats, count = 1) {
 }
 
 // ─── TOP 5 추천 (1게임 × 상위 5전략) ───
-// 백테스트 성능순: 오래된번호(+13.9%) > 마르코프(전이확률) > 다중윈도우(앙상블)
-//                  > 핫콜드(균형) > 빈출쌍(공출현)
-const TOP5_INDICES = [2, 6, 5, 1, 3]; // STRATEGIES 배열 인덱스
+// 백테스트 성능순 (500회×100회차 기준):
+// 핫/콜드(0.837) > 빈출쌍(0.834) > 다중윈도우(0.818) > AC끝수(0.811) > 빈도가중(0.807)
+const TOP5_INDICES = [1, 3, 5, 8, 0]; // STRATEGIES 배열 인덱스
 
 function getTop5(stats) {
   const results = [];
@@ -445,4 +538,180 @@ function getRecentRecords(records, n = 50) {
   }));
 }
 
-module.exports = { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, getRecentRecords, EMBEDDED_DATA };
+// ─── 고급 분석 ───
+
+/**
+ * AC값(Arithmetic Complexity): 6개 번호 간 차이값 중 고유한 값의 수 - 5
+ * C(6,2)=15쌍, AC = 고유차이수 - 5, 범위 0~10
+ */
+function computeAC(numbers) {
+  const diffs = new Set();
+  for (let i = 0; i < numbers.length; i++)
+    for (let j = i + 1; j < numbers.length; j++)
+      diffs.add(Math.abs(numbers[i] - numbers[j]));
+  return diffs.size - 5;
+}
+
+/**
+ * LottoStats에 고급 분석 메서드 추가
+ */
+LottoStats.prototype.getAdvancedAnalysis = function (recentN = 20) {
+  // ── AC값 분석 ──
+  const acValues = this.records.map(r => computeAC(r.numbers));
+  const acDistribution = new Array(11).fill(0); // AC 0~10
+  for (const ac of acValues) acDistribution[ac]++;
+  const recentAC = acValues.slice(-recentN);
+  const acAvg = +(acValues.reduce((a, b) => a + b, 0) / acValues.length).toFixed(2);
+
+  // ── 끝수 분석 ──
+  const endingFreq = new Array(10).fill(0);
+  for (const r of this.records)
+    for (const n of r.numbers) endingFreq[n % 10]++;
+  // 최근 끝수
+  const recentEndingFreq = new Array(10).fill(0);
+  for (const r of this.records.slice(-recentN))
+    for (const n of r.numbers) recentEndingFreq[n % 10]++;
+
+  // ── 연번 분석 ──
+  // 각 회차에서 연속번호 쌍(consecutive pair) 개수 분포
+  const consecDistribution = new Array(6).fill(0); // 0~5쌍
+  for (const r of this.records) {
+    let pairs = 0;
+    const sorted = [...r.numbers].sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++)
+      if (sorted[i] - sorted[i - 1] === 1) pairs++;
+    consecDistribution[Math.min(pairs, 5)]++;
+  }
+  // 최근 연번 추세
+  const recentConsec = this.records.slice(-recentN).map(r => {
+    let pairs = 0;
+    const sorted = [...r.numbers].sort((a, b) => a - b);
+    for (let i = 1; i < sorted.length; i++)
+      if (sorted[i] - sorted[i - 1] === 1) pairs++;
+    return { round: r.round, pairs };
+  });
+
+  // ── 번호대 분석 ──
+  // 구간: 1-10, 11-20, 21-30, 31-40, 41-45
+  const ranges = [[1, 10], [11, 20], [21, 30], [31, 40], [41, 45]];
+  const rangeLabels = ["1~10", "11~20", "21~30", "31~40", "41~45"];
+  const rangeFreq = ranges.map(() => 0);
+  for (const r of this.records)
+    for (const n of r.numbers)
+      for (let ri = 0; ri < ranges.length; ri++)
+        if (n >= ranges[ri][0] && n <= ranges[ri][1]) { rangeFreq[ri]++; break; }
+
+  // 각 회차별 번호대 분포
+  const rangeDistribution = new Array(ranges.length).fill(null).map(() => new Array(7).fill(0)); // [rangeIdx][count] = 빈도
+  for (const r of this.records) {
+    const cnt = ranges.map(() => 0);
+    for (const n of r.numbers)
+      for (let ri = 0; ri < ranges.length; ri++)
+        if (n >= ranges[ri][0] && n <= ranges[ri][1]) { cnt[ri]++; break; }
+    cnt.forEach((c, ri) => rangeDistribution[ri][c]++);
+  }
+
+  // ── 낙수표 (최근 N회 번호 출현 그리드) ──
+  const dropChart = this.records.slice(-recentN).map(r => ({
+    round: r.round,
+    date: r.date,
+    numbers: r.numbers,
+    bonus: r.bonus,
+  }));
+
+  // ── 후나츠 사카이 분석 (번호별 출현 주기 패턴) ──
+  // 각 번호의 출현 간격(gap)을 추적, 평균 주기와 현재 미출현 비교
+  const gapData = [];
+  for (let num = 1; num <= 45; num++) {
+    const appearances = [];
+    for (const r of this.records)
+      if (r.numbers.includes(num)) appearances.push(r.round);
+    const gaps = [];
+    for (let i = 1; i < appearances.length; i++)
+      gaps.push(appearances[i] - appearances[i - 1]);
+    const avgGap = gaps.length > 0 ? +(gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(1) : 0;
+    const maxGap = gaps.length > 0 ? Math.max(...gaps) : 0;
+    const minGap = gaps.length > 0 ? Math.min(...gaps) : 0;
+    const currentGap = this.lastSeen[num];
+    const ratio = avgGap > 0 ? +(currentGap / avgGap).toFixed(2) : 0;
+    gapData.push({ num, avgGap, maxGap, minGap, currentGap, ratio, totalAppearances: appearances.length });
+  }
+  // ratio > 1이면 평균보다 오래 미출현 → 출현 예상
+  gapData.sort((a, b) => b.ratio - a.ratio);
+
+  return {
+    ac: { distribution: acDistribution, avg: acAvg, recent: recentAC },
+    ending: { freq: endingFreq, recentFreq: recentEndingFreq },
+    consecutive: { distribution: consecDistribution, recent: recentConsec },
+    range: { labels: rangeLabels, freq: rangeFreq, distribution: rangeDistribution },
+    dropChart,
+    funatsu: gapData,
+  };
+};
+
+// ─── 백테스트 ───
+
+const TEST_WINDOW = 100;
+const SETS_PER_DRAW = 20;
+
+function theoreticalProb(k) {
+  function C(n, r) {
+    if (r > n || r < 0) return 0;
+    let res = 1;
+    for (let i = 0; i < r; i++) res = res * (n - i) / (i + 1);
+    return res;
+  }
+  return C(6, k) * C(39, 6 - k) / C(45, 6);
+}
+
+function runBacktest(onProgress) {
+  const records = getRecords();
+  const total = records.length;
+  const testStart = Math.max(0, total - TEST_WINDOW);
+  const testCount = total - testStart;
+  const theoOver3 = [3, 4, 5, 6].reduce((a, k) => a + theoreticalProb(k), 0);
+
+  const results = STRATEGIES.map(s => ({
+    name: s.name,
+    matchCounts: [0, 0, 0, 0, 0, 0, 0],
+    totalSets: 0,
+  }));
+
+  for (let i = testStart; i < total; i++) {
+    const trainingRecords = records.slice(0, i);
+    if (trainingRecords.length < 50) continue;
+    const testStats = new LottoStats(trainingRecords);
+    const actual = new Set(records[i].numbers);
+
+    for (let s = 0; s < STRATEGIES.length; s++) {
+      for (let j = 0; j < SETS_PER_DRAW; j++) {
+        const picked = STRATEGIES[s].fn(testStats);
+        const matches = picked.filter(n => actual.has(n)).length;
+        results[s].matchCounts[matches]++;
+        results[s].totalSets++;
+      }
+    }
+
+    if (onProgress) {
+      const pct = Math.round(((i - testStart + 1) / testCount) * 100);
+      onProgress(pct);
+    }
+  }
+
+  return results.map(r => {
+    const total = r.totalSets;
+    if (total === 0) return { name: r.name, avgMatches: 0, over3Rate: 0, vsTheory: "0" };
+    let avg = 0;
+    for (let k = 0; k <= 6; k++) avg += k * r.matchCounts[k] / total;
+    const over3 = (r.matchCounts[3] + r.matchCounts[4] + r.matchCounts[5] + r.matchCounts[6]) / total;
+    const vs = theoOver3 > 0 ? ((over3 / theoOver3 - 1) * 100).toFixed(1) : "0";
+    return {
+      name: r.name,
+      avgMatches: parseFloat(avg.toFixed(4)),
+      over3Rate: parseFloat((over3 * 100).toFixed(4)),
+      vsTheory: (over3 >= theoOver3 ? "+" : "") + vs,
+    };
+  }).sort((a, b) => b.over3Rate - a.over3Rate);
+}
+
+module.exports = { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, getRecentRecords, EMBEDDED_DATA, runBacktest };

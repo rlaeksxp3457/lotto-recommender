@@ -50,6 +50,7 @@ ipcMain.handle("window-maximize", () => {
 ipcMain.handle("window-close", () => { app.isQuitting = true; app.quit(); });
 ipcMain.handle("window-hide", () => mainWindow?.hide());
 ipcMain.handle("window-is-maximized", () => mainWindow?.isMaximized() ?? false);
+ipcMain.handle("toggle-devtools", () => mainWindow?.webContents.toggleDevTools());
 
 // ── 앱 버전 ──
 ipcMain.handle("get-app-version", () => app.getVersion());
@@ -156,11 +157,13 @@ app.whenReady().then(() => {
     }
   });
 
-  // 앱 시작 즉시 업데이트 확인
-  if (updater) {
+  // 앱 시작 즉시 업데이트 확인 (패키징된 앱에서만)
+  if (updater && app.isPackaged) {
     updater.checkForUpdates().catch(() => {});
-    // 5분마다 주기적 업데이트 체크
-    setInterval(() => updater.checkForUpdates().catch(() => {}), 5 * 60 * 1000);
+    // 30초마다 주기적 업데이트 체크
+    setInterval(() => {
+      try { updater.checkForUpdates().catch(() => {}); } catch {}
+    }, 30 * 1000);
   }
 });
 

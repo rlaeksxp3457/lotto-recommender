@@ -1,11 +1,16 @@
 const fs = require("fs");
 const path = require("path");
+const { Worker } = require("worker_threads");
 const { app, dialog } = require("electron");
 const { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, getRecentRecords, EMBEDDED_DATA } = require("./analyzer");
 const EMBEDDED_PRIZE = require("./prize_data");
 
 let stats = null;
 let extraData = [];
+
+// ── 백테스트 캐시 ──
+let cachedLottoBacktest = null;
+let cachedPensionBacktest = null;
 
 const UPDATES_PATH = path.join(app.getPath("userData"), "updates.json");
 const PRIZE_PATH = path.join(app.getPath("userData"), "prize_data.json");
@@ -258,6 +263,70 @@ function setupIpc(ipcMain, getWindow) {
       message: parts.join(", ") + " 완료",
       summary,
     };
+  });
+
+  ipcMain.handle("get-advanced-analysis", async (_event, recentN) => {
+    if (!stats) return { error: "데이터가 로드되지 않았습니다." };
+    try {
+      return { analysis: stats.getAdvancedAnalysis(recentN || 20) };
+    } catch (e) {
+      return { error: `고급 분석 실패: ${e.message}` };
+    }
+  });
+
+  // ── 백테스트 ──
+
+  function startBacktest(getWindow) {
+    const workerPath = path.join(__dirname, "backtest_worker.js");
+    const sendToRenderer = (channel, data) => {
+      const win = getWindow();
+      if (win && !win.isDestroyed()) win.webContents.send(channel, data);
+    };
+
+    // 로또 Worker
+    const lottoWorker = new Worker(workerPath, { workerData: { type: "lotto" } });
+    lottoWorker.on("message", (msg) => {
+      if (msg.event === "progress") {
+        sendToRenderer("backtest-progress", { type: "lotto", pct: msg.pct });
+      } else if (msg.event === "done") {
+        cachedLottoBacktest = msg.results;
+        sendToRenderer("backtest-done", { type: "lotto", results: msg.results });
+      }
+    });
+    lottoWorker.on("error", (err) => {
+      console.error("Lotto backtest worker error:", err);
+      sendToRenderer("backtest-done", { type: "lotto", results: null, error: err.message });
+    });
+
+    // 연금복권 Worker (병렬)
+    const pensionWorker = new Worker(workerPath, { workerData: { type: "pension" } });
+    pensionWorker.on("message", (msg) => {
+      if (msg.event === "progress") {
+        sendToRenderer("backtest-progress", { type: "pension", pct: msg.pct });
+      } else if (msg.event === "done") {
+        cachedPensionBacktest = msg.results;
+        sendToRenderer("backtest-done", { type: "pension", results: msg.results });
+      }
+    });
+    pensionWorker.on("error", (err) => {
+      console.error("Pension backtest worker error:", err);
+      sendToRenderer("backtest-done", { type: "pension", results: null, error: err.message });
+    });
+  }
+
+  ipcMain.handle("get-backtest", async () => {
+    return { results: cachedLottoBacktest };
+  });
+
+  ipcMain.handle("pension-get-backtest", async () => {
+    return { results: cachedPensionBacktest };
+  });
+
+  ipcMain.handle("start-backtest", async () => {
+    cachedLottoBacktest = null;
+    cachedPensionBacktest = null;
+    startBacktest(getWindow);
+    return { started: true };
   });
 
   ipcMain.handle("upload-csv", async () => {

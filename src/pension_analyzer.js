@@ -404,6 +404,80 @@ function strategyBalanced(stats) {
   return strategyFrequency(stats);
 }
 
+/** 전략 8: 후나츠 사카이 — 위치별 출현 주기 비율 기반 */
+function strategyFunatsu(stats) {
+  // 각 위치에서 ratio가 높은(오래 미출현) 숫자를 후보로 가중 선택
+  for (let t = 0; t < 500; t++) {
+    const group = generateGroup(stats, "freq");
+    const digits = Array.from({ length: 6 }, (_, i) => {
+      const pos = i + 1;
+      const candidates = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+      const weights = candidates.map(d => {
+        const gap = stats.lastSeen[pos][d];
+        const freq = stats.posFreq[pos][d] || 1;
+        const avgGap = stats.total / freq;
+        const ratio = avgGap > 0 ? gap / avgGap : 0;
+        return Math.max(ratio, 0.1);
+      });
+      return weightedPick(candidates, weights);
+    });
+    if (isValid(group, digits)) return { group, digits };
+  }
+  return strategyFrequency(stats);
+}
+
+/** 전략 9: 합계 균형 + 홀짝 — 합계 범위 + 홀짝 조건 */
+function strategySumBalance(stats) {
+  // 자릿수 합계가 역대 평균 ± 5 범위 내 + 홀짝 균형
+  const sums = stats.records.map(r => r.digits.reduce((a, b) => a + b, 0));
+  const avgSum = sums.reduce((a, b) => a + b, 0) / sums.length;
+  const lo = Math.floor(avgSum - 5);
+  const hi = Math.ceil(avgSum + 5);
+
+  for (let t = 0; t < 1000; t++) {
+    const group = generateGroup(stats, "freq");
+    const digits = Array.from({ length: 6 }, (_, i) => generateDigit(stats, i + 1, "freq"));
+    const sum = digits.reduce((a, b) => a + b, 0);
+    if (sum < lo || sum > hi) continue;
+    const oddCount = digits.filter(d => d % 2 === 1).length;
+    if (oddCount < 2 || oddCount > 4) continue;
+    if (isValid(group, digits)) return { group, digits };
+  }
+  return strategyFrequency(stats);
+}
+
+/** 전략 10: 반복 회피 + 인접쌍 — 숫자 반복 최소 + 인접쌍 패턴 */
+function strategyNoRepeatAdjacent(stats) {
+  for (let t = 0; t < 500; t++) {
+    const group = generateGroup(stats, "freq");
+    const digits = new Array(6);
+
+    // 첫 자리: 빈도 기반
+    digits[0] = generateDigit(stats, 1, "freq");
+
+    // 나머지: 인접쌍 빈도 + 이전 자리와 다른 숫자 우선
+    for (let i = 1; i < 6; i++) {
+      const pairMap = stats.adjacentPairFreq[i - 1];
+      const candidates = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+      const weights = candidates.map(d => {
+        const key = `${digits[i - 1]},${d}`;
+        let w = (pairMap.get(key) || 0) + 1;
+        if (d === digits[i - 1]) w *= 0.3; // 반복 패널티
+        return w;
+      });
+      digits[i] = weightedPick(candidates, weights);
+    }
+
+    // 반복 숫자 최대 2개까지만
+    const freq = new Array(10).fill(0);
+    for (const d of digits) freq[d]++;
+    if (Math.max(...freq) > 2) continue;
+
+    if (isValid(group, digits)) return { group, digits };
+  }
+  return strategyFrequency(stats);
+}
+
 // ─── 추천 결과 생성 ───
 
 const STRATEGIES = [
@@ -449,6 +523,24 @@ const STRATEGIES = [
       { text: "6자리 중 홀수 개수가 2~4개인지 검증합니다.", visual: "balance" },
       { text: "저수(0~4) 개수가 2~4개인지 추가 검증하여 균형 잡힌 번호를 확정합니다.", visual: "pick" },
     ] },
+  { name: "후나츠 사카이",     desc: "출현 주기 비율 기반 미출현 숫자 우선",   fn: strategyFunatsu,
+    howItWorks: [
+      { text: "각 위치별 숫자의 평균 출현 간격과 현재 미출현 간격을 계산합니다.", visual: "gapRatio" },
+      { text: "미출현 비율이 높은 숫자에 더 높은 가중치를 부여합니다.", visual: "score" },
+      { text: "가중 확률로 각 위치의 숫자를 선택하고 유효성을 검증합니다.", visual: "pick" },
+    ] },
+  { name: "합계 균형 + 홀짝",  desc: "자릿수 합계 범위 + 홀짝 균형 조건",     fn: strategySumBalance,
+    howItWorks: [
+      { text: "역대 자릿수 합계 평균을 기준으로 ±5 범위를 설정합니다.", visual: "sumRange" },
+      { text: "빈도 가중으로 생성한 번호의 합계가 범위 내인지 검증합니다.", visual: "filter" },
+      { text: "홀수 개수 2~4개 조건을 추가 검증하여 균형 잡힌 번호를 확정합니다.", visual: "pick" },
+    ] },
+  { name: "반복 회피 + 인접쌍", desc: "숫자 반복 최소화 + 인접쌍 패턴 활용",    fn: strategyNoRepeatAdjacent,
+    howItWorks: [
+      { text: "첫 번째 자리는 빈도 가중으로 선택합니다.", visual: "noRepeat" },
+      { text: "이후 자리는 인접쌍 빈도를 활용하되, 같은 숫자 반복에 패널티를 줍니다.", visual: "chain" },
+      { text: "최대 반복 2개 이하 조건과 유효성을 검증하여 확정합니다.", visual: "pick" },
+    ] },
 ];
 
 function getPensionRecommendations(stats, count = 1) {
@@ -472,8 +564,8 @@ function getPensionRecommendations(stats, count = 1) {
 }
 
 // ─── TOP 5 추천 ───
-// 성능순: 빈도가중 > 마르코프 > 인접쌍 > 최근트렌드 > 균형분포
-const TOP5_INDICES = [0, 5, 4, 2, 6];
+// 성능순(500trial): 빈도가중 > 연속회피 > 균형분포 > 마르코프 > 후나츠
+const TOP5_INDICES = [0, 3, 6, 5, 7];
 
 function getPensionTop5(stats) {
   const results = [];
@@ -506,6 +598,144 @@ function getRecentRecords(records, n = 50) {
   }));
 }
 
+// ─── 고급 분석 ───
+
+PensionStats.prototype.getAdvancedAnalysis = function (recentN = 20) {
+  // ── 위치별 끝수 패턴 (자릿수 반복 빈도) ──
+  const digitRepeatDist = new Array(7).fill(0); // 0~6개 동일 숫자
+  for (const r of this.records) {
+    const freq = new Array(10).fill(0);
+    for (const d of r.digits) freq[d]++;
+    const maxRepeat = Math.max(...freq);
+    digitRepeatDist[Math.min(maxRepeat, 6)]++;
+  }
+
+  // ── 자릿수 합계 분포 ──
+  const digitSumDist = this.getDigitSumDist();
+  const sums = this.records.map(r => r.digits.reduce((a, b) => a + b, 0));
+  const sumAvg = +(sums.reduce((a, b) => a + b, 0) / sums.length).toFixed(1);
+
+  // ── 조별 분포 ──
+  const groupDist = Array.from({ length: 5 }, (_, i) => ({
+    group: i + 1,
+    count: this.posFreq[0][i + 1],
+    pct: +((this.posFreq[0][i + 1] / this.total) * 100).toFixed(1),
+  }));
+
+  // ── 위치별 홀짝 비율 ──
+  const posOddEven = Array.from({ length: 6 }, (_, pos) => {
+    let odd = 0, even = 0;
+    for (const r of this.records) {
+      if (r.digits[pos] % 2 === 1) odd++; else even++;
+    }
+    return { pos: pos + 1, odd, even, oddPct: +((odd / this.total) * 100).toFixed(1) };
+  });
+
+  // ── 낙수표 (최근 N회) ──
+  const dropChart = this.records.slice(-recentN).map(r => ({
+    round: r.round, date: r.date, group: r.group, digits: r.digits, bonus: r.bonus,
+  }));
+
+  // ── 후나츠 사카이 (위치별 숫자 출현 주기) ──
+  const funatsu = [];
+  for (let pos = 1; pos <= 6; pos++) {
+    for (let digit = 0; digit <= 9; digit++) {
+      const appearances = [];
+      for (const r of this.records)
+        if (r.digits[pos - 1] === digit) appearances.push(r.round);
+      const gaps = [];
+      for (let i = 1; i < appearances.length; i++) gaps.push(appearances[i] - appearances[i - 1]);
+      const avgGap = gaps.length > 0 ? +(gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(1) : 0;
+      const currentGap = this.lastSeen[pos][digit];
+      const ratio = avgGap > 0 ? +(currentGap / avgGap).toFixed(2) : 0;
+      funatsu.push({ pos, digit, avgGap, currentGap, ratio, total: appearances.length });
+    }
+  }
+  funatsu.sort((a, b) => b.ratio - a.ratio);
+
+  // ── 인접자리 연속 패턴 분포 ──
+  const adjacentSameDist = new Array(6).fill(0); // 인접 동일숫자 0~5쌍
+  for (const r of this.records) {
+    let same = 0;
+    for (let i = 0; i < 5; i++) if (r.digits[i] === r.digits[i + 1]) same++;
+    adjacentSameDist[Math.min(same, 5)]++;
+  }
+
+  return {
+    digitRepeat: digitRepeatDist,
+    digitSum: { dist: digitSumDist, avg: sumAvg },
+    groupDist,
+    posOddEven,
+    dropChart,
+    funatsu,
+    adjacentSame: adjacentSameDist,
+  };
+};
+
+// ─── 백테스트 ───
+
+const TEST_WINDOW = 100;
+const SETS_PER_DRAW = 20;
+
+function runPensionBacktest(onProgress) {
+  const records = getRecords();
+  const total = records.length;
+  const testStart = Math.max(0, total - TEST_WINDOW);
+  const testCount = total - testStart;
+
+  // 이론적 확률: 각 위치 독립 1/10 → 6자리 위치별 일치 기대값 = 6 * 0.1 = 0.6
+  const theoAvgMatch = 0.6;
+  // 1자리 이상 일치 이론 확률: 1 - (0.9)^6 ≈ 0.4686
+  const theoOver1 = 1 - Math.pow(0.9, 6);
+
+  const results = STRATEGIES.map(s => ({
+    name: s.name,
+    posMatchCounts: 0,   // 총 위치 일치 수
+    over1Count: 0,       // 1자리 이상 일치 세트 수
+    totalSets: 0,
+  }));
+
+  for (let i = testStart; i < total; i++) {
+    const trainingRecords = records.slice(0, i);
+    if (trainingRecords.length < 30) continue;
+    const testStats = new PensionStats(trainingRecords);
+    const actual = records[i];
+
+    for (let s = 0; s < STRATEGIES.length; s++) {
+      for (let j = 0; j < SETS_PER_DRAW; j++) {
+        const { group, digits } = STRATEGIES[s].fn(testStats);
+        // 위치별 일치 수 (조 제외, 6자리만)
+        let posMatches = 0;
+        for (let p = 0; p < 6; p++) {
+          if (digits[p] === actual.digits[p]) posMatches++;
+        }
+        results[s].posMatchCounts += posMatches;
+        if (posMatches >= 1) results[s].over1Count++;
+        results[s].totalSets++;
+      }
+    }
+
+    if (onProgress) {
+      const pct = Math.round(((i - testStart + 1) / testCount) * 100);
+      onProgress(pct);
+    }
+  }
+
+  return results.map(r => {
+    const total = r.totalSets;
+    if (total === 0) return { name: r.name, avgMatches: 0, over1Rate: 0, vsTheory: "0" };
+    const avg = r.posMatchCounts / total;
+    const over1Rate = r.over1Count / total;
+    const vs = theoOver1 > 0 ? ((over1Rate / theoOver1 - 1) * 100).toFixed(1) : "0";
+    return {
+      name: r.name,
+      avgMatches: parseFloat(avg.toFixed(4)),
+      over1Rate: parseFloat((over1Rate * 100).toFixed(4)),
+      vsTheory: (over1Rate >= theoOver1 ? "+" : "") + vs,
+    };
+  }).sort((a, b) => b.over1Rate - a.over1Rate);
+}
+
 module.exports = {
   getRecords,
   PensionStats,
@@ -513,4 +743,5 @@ module.exports = {
   getPensionTop5,
   getRecentRecords,
   EMBEDDED_DATA,
+  runPensionBacktest,
 };

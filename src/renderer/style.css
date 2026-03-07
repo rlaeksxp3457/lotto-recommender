@@ -405,9 +405,12 @@ body {
   padding: 0;
 }
 
-.content::-webkit-scrollbar { width: 8px; }
-.content::-webkit-scrollbar-track { background: transparent; }
-.content::-webkit-scrollbar-thumb { background: var(--bg-darkest); border-radius: 4px; }
+/* 전역 커스텀 스크롤바 */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--bg-darkest); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background: #1a1b1e; }
+*::-webkit-scrollbar-corner { background: transparent; }
 
 .tab-content {
   display: none;
@@ -2029,8 +2032,8 @@ body {
   height: fit-content;
 }
 .my-numbers-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 10px;
 }
 .my-numbers-empty {
@@ -2039,6 +2042,300 @@ body {
   padding: 40px 0;
   font-size: 14px;
 }
+
+/* ─── 회차 필터 ─── */
+.my-numbers-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.my-numbers-filter label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.my-numbers-filter-select {
+  background: var(--bg-tertiary, var(--bg-secondary));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-bright);
+  padding: 5px 10px;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  min-width: 120px;
+}
+.my-numbers-filter-select:focus { border-color: var(--accent); }
+.my-numbers-io-btns { display: flex; gap: 6px; margin-left: auto; }
+.btn-io {
+  background: var(--bg-tertiary, var(--bg-secondary));
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-io:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ─── 로또 용지 (티켓) ─── */
+.my-ticket {
+  background: linear-gradient(170deg, #fafafa 0%, #f0f0f0 100%);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1.5px solid #d0d0d0;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.12);
+  max-width: 400px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+.my-ticket.drop-target {
+  border-color: #2e86c1;
+  box-shadow: 0 0 0 3px rgba(46,134,193,0.4), 0 4px 20px rgba(0,0,0,0.25);
+}
+.my-ticket-header {
+  background: linear-gradient(135deg, #1a5276, #2e86c1);
+  color: #fff;
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.my-ticket-header.pension { background: linear-gradient(135deg, #0077b6, #0096c7); }
+.my-ticket-round { font-size: 13px; font-weight: 800; letter-spacing: 0.02em; }
+.my-ticket-date { font-size: 10px; opacity: 0.8; }
+.my-ticket-win-row {
+  background: #f0f4f8;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 1px solid #d0d8e0;
+}
+.my-ticket-win-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #666;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.my-ticket-win-balls {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.my-ticket-win-balls .lotto-ball {
+  width: 22px;
+  height: 22px;
+  font-size: 10px;
+}
+.my-ticket-win-balls .bonus-plus {
+  font-size: 13px;
+  font-weight: 700;
+  color: #999;
+  margin: 0 2px;
+}
+.my-ticket-win-balls .bonus-ball {
+  border: 2px solid #ed4245;
+}
+.my-ticket-win-balls .pension-group-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #00b4d8, #0077b6);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.my-ticket-win-balls .pension-digit {
+  width: 20px;
+  height: 22px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 3px;
+}
+.my-ticket-win-balls .pension-digit.pos-1 { background: linear-gradient(135deg, #ff6b6b, #e63946); }
+.my-ticket-win-balls .pension-digit.pos-2 { background: linear-gradient(135deg, #ffa94d, #e67e22); }
+.my-ticket-win-balls .pension-digit.pos-3 { background: linear-gradient(135deg, #69db7c, #27ae60); }
+.my-ticket-win-balls .pension-digit.pos-4 { background: linear-gradient(135deg, #74c0fc, #3498db); }
+.my-ticket-win-balls .pension-digit.pos-5 { background: linear-gradient(135deg, #b197fc, #8e44ad); }
+.my-ticket-win-balls .pension-digit.pos-6 { background: linear-gradient(135deg, #f783ac, #e84393); }
+.my-ticket-games { padding: 4px 0; flex: 1; min-height: 198px; }
+.my-ticket-game {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-bottom: 1px dashed #d0d0d0;
+  gap: 6px;
+  cursor: grab;
+  transition: opacity 0.15s, background 0.15s;
+}
+.my-ticket-game:active { cursor: grabbing; }
+.my-ticket-game:last-child { border-bottom: none; }
+.my-ticket-game.dragging-row { opacity: 0.3; background: #e8f0fe; }
+.my-ticket-row-del {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+  visibility: hidden;
+}
+.my-ticket-game:hover .my-ticket-row-del { visibility: visible; }
+.my-ticket-row-del:hover { color: #ed4245; background: rgba(237,66,69,0.1); }
+.my-ticket-label {
+  font-size: 12px;
+  font-weight: 800;
+  color: #1a5276;
+  min-width: 16px;
+  flex-shrink: 0;
+}
+.my-ticket-header.pension ~ .my-ticket-games .my-ticket-label { color: #0077b6; }
+.my-ticket-balls {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+}
+.my-ticket-balls .lotto-ball {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.my-ticket-balls .pension-group-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0077b6;
+  background: rgba(0,119,182,0.12);
+  border: 1px solid rgba(0,119,182,0.3);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-right: 2px;
+  white-space: nowrap;
+}
+.my-ticket-balls .pension-digit {
+  width: 24px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 4px;
+}
+.my-ticket-balls .pension-digit.pos-1 { background: linear-gradient(135deg, #ff6b6b, #e63946); }
+.my-ticket-balls .pension-digit.pos-2 { background: linear-gradient(135deg, #ffa94d, #e67e22); }
+.my-ticket-balls .pension-digit.pos-3 { background: linear-gradient(135deg, #69db7c, #27ae60); }
+.my-ticket-balls .pension-digit.pos-4 { background: linear-gradient(135deg, #74c0fc, #3498db); }
+.my-ticket-balls .pension-digit.pos-5 { background: linear-gradient(135deg, #b197fc, #8e44ad); }
+.my-ticket-balls .pension-digit.pos-6 { background: linear-gradient(135deg, #f783ac, #e84393); }
+.my-ticket-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.my-ticket-badge.rank-1st { background: rgba(255,215,0,0.3); color: #b8860b; }
+.my-ticket-badge.rank-2nd { background: rgba(192,192,192,0.3); color: #666; }
+.my-ticket-badge.rank-3rd { background: rgba(205,127,50,0.3); color: #8b4513; }
+.my-ticket-badge.rank-minor { background: rgba(88,101,242,0.2); color: #5865f2; }
+.my-ticket-badge.rank-miss { background: rgba(0,0,0,0.08); color: #999; }
+.my-ticket-badge.unchecked { background: rgba(0,0,0,0.05); color: #aaa; font-weight: 400; }
+.my-ticket-footer {
+  background: #e8e8e8;
+  padding: 6px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.my-ticket-prize {
+  font-size: 11px;
+  font-weight: 700;
+  color: #333;
+}
+.my-ticket-prize.has-prize { color: #d4380d; }
+.my-ticket-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.my-ticket-check-btn {
+  background: #1a5276;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.my-ticket-check-btn:hover { background: #2e86c1; }
+.my-ticket-check-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.my-ticket-check-btn.pension { background: #0077b6; }
+.my-ticket-check-btn.pension:hover { background: #0096c7; }
+.my-ticket-del-btn {
+  background: none;
+  border: 1px solid #ccc;
+  color: #999;
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.my-ticket-del-btn:hover {
+  border-color: #ed4245;
+  color: #ed4245;
+  background: rgba(237,66,69,0.08);
+}
+
+/* 미일치 번호 회색 처리 */
+.my-ticket-balls .lotto-ball.ball-miss {
+  background: #bbb !important;
+  opacity: 0.5;
+}
+.my-ticket-balls .lotto-ball.ball-bonus-hit {
+  box-shadow: 0 0 0 2px #ff6b6b;
+}
+.my-ticket-balls .pension-group-tag.tag-miss {
+  opacity: 0.4;
+}
+.my-ticket-balls .pension-digit.digit-miss {
+  opacity: 0.45;
+}
+
+/* 배지 래퍼 (등수 + 일치 수) */
+.my-ticket-badge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.my-ticket-match-detail {
+  font-size: 9px;
+  color: #888;
+  white-space: nowrap;
+}
+
 .my-number-card {
   background: var(--bg-secondary);
   border-radius: 10px;
@@ -2320,7 +2617,8 @@ body {
   margin: 0 0 4px;
 }
 .algo-detail.open {
-  max-height: 600px;
+  max-height: 900px;
+  overflow-y: auto;
   opacity: 1;
   padding: 10px 12px;
   margin: 6px 0 8px;
@@ -2359,7 +2657,7 @@ body {
 
 /* ─── 알고리즘 비주얼 애니메이션 ─── */
 .algo-visual {
-  height: 56px;
+  min-height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2367,7 +2665,6 @@ body {
   padding: 4px 8px;
   border-radius: 6px;
   background: rgba(0,0,0,0.15);
-  overflow: hidden;
   opacity: 0;
   transform: translateY(6px);
   transition: opacity 0.3s, transform 0.3s;
@@ -3199,12 +3496,1031 @@ body {
   cursor: default;
 }
 
+/* ─── 고급 분석 ─── */
+.adv-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.adv-controls label {
+  font-size: 13px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.adv-controls select {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text);
+  font-size: 12px;
+}
+.adv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 14px;
+}
+.adv-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.adv-card-wide {
+  grid-column: 1 / -1;
+}
+.adv-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-bright);
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  margin: 0;
+  background: var(--bg-tertiary, rgba(0,0,0,0.03));
+}
+.adv-card-body {
+  padding: 14px 16px;
+}
+.adv-placeholder {
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+}
+.adv-section-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+.adv-sub-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 14px 0 8px;
+}
+.adv-stat-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.adv-stat {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.adv-stat strong {
+  color: var(--text-bright);
+}
+
+/* 바 차트 */
+.adv-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 120px;
+  padding-bottom: 4px;
+}
+.adv-bar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+.adv-bar-wide { min-width: 40px; }
+.adv-bar-container {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.adv-bar {
+  width: 80%;
+  max-width: 32px;
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  transition: height 0.3s;
+}
+.adv-bar-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text);
+}
+.adv-bar-count {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* 연번 최근 태그 */
+.adv-recent-consec {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.adv-consec-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--bg-tertiary, rgba(0,0,0,0.05));
+  color: var(--text-dim);
+}
+.adv-consec-tag.has-consec {
+  background: rgba(52,152,219,0.15);
+  color: #2980b9;
+  font-weight: 600;
+}
+
+/* 번호대 테이블 */
+.adv-range-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.adv-range-table th, .adv-range-table td {
+  padding: 4px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.adv-range-table th {
+  background: var(--bg-tertiary, rgba(0,0,0,0.03));
+  font-weight: 700;
+  color: var(--text);
+}
+.adv-range-table td.has-value {
+  color: var(--text-bright);
+  font-weight: 600;
+}
+
+/* 낙수표 */
+.adv-drop-chart-wrap {
+  overflow-x: auto;
+  max-height: 600px;
+  overflow-y: auto;
+}
+.adv-drop-table {
+  border-collapse: collapse;
+  font-size: 10px;
+}
+.adv-drop-table th, .adv-drop-table td {
+  padding: 2px 4px;
+  text-align: center;
+  border: 1px solid var(--border);
+  min-width: 28px;
+}
+.adv-drop-num-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg-secondary);
+}
+.adv-drop-num-cell {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-secondary);
+}
+.adv-drop-round-col {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-dim);
+  writing-mode: vertical-lr;
+  padding: 4px 2px;
+}
+.adv-drop-cell {
+  height: 20px;
+  color: transparent;
+}
+.adv-drop-cell.adv-drop-hit {
+  background: rgba(52,152,219,0.2);
+  color: #2980b9;
+  font-weight: 700;
+}
+.adv-drop-cell.adv-drop-bonus {
+  background: rgba(231,76,60,0.1);
+  color: #e74c3c;
+}
+.lotto-ball-xs {
+  width: 20px;
+  height: 20px;
+  font-size: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+}
+
+/* 후나츠 사카이 */
+.adv-funatsu-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+.adv-funatsu-table th, .adv-funatsu-table td {
+  padding: 5px 8px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+.adv-funatsu-table th {
+  background: var(--bg-tertiary, rgba(0,0,0,0.03));
+  font-weight: 700;
+  color: var(--text);
+  font-size: 10px;
+}
+.ratio-high { color: #e74c3c; font-weight: 700; }
+.ratio-mid { color: #f39c12; font-weight: 600; }
+.ratio-low { color: #3498db; }
+
+.adv-funatsu-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-bottom: 4px;
+  padding-right: 6px;
+}
+.adv-funatsu-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.adv-funatsu-bar-track {
+  flex: 1;
+  height: 12px;
+  background: var(--bg-tertiary, rgba(0,0,0,0.05));
+  border-radius: 6px;
+  overflow: hidden;
+}
+.adv-funatsu-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.3s;
+}
+.adv-funatsu-ratio {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ─── 연금복권 고급 분석 전용 ─── */
+.pen-oddeven-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pen-oddeven-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pen-oddeven-label {
+  min-width: 48px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.pen-oddeven-bar-track {
+  flex: 1;
+  display: flex;
+  height: 22px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.pen-oddeven-bar-odd {
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pen-oddeven-bar-even {
+  background: #2ecc71;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pen-oddeven-counts {
+  font-size: 11px;
+  color: var(--text-dim);
+  min-width: 80px;
+  text-align: right;
+}
+
+.pen-drop-pos-start td {
+  border-top: 2px solid var(--border) !important;
+}
+.pen-drop-digit {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.pen-funatsu-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+  min-width: 36px;
+}
+
+.adv-bar-chart-dense {
+  gap: 2px;
+}
+.adv-bar-chart-dense .adv-bar-wrap {
+  min-width: 18px;
+}
+
+/* ─── 설정 페이지 ─── */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+.settings-card {
+  background: var(--bg-dark);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.settings-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+}
+.settings-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+.settings-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.settings-radio input[type="radio"] { display: none; }
+.settings-radio-mark {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--text-dim);
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+.settings-radio input:checked + .settings-radio-mark {
+  border-color: var(--accent);
+}
+.settings-radio input:checked + .settings-radio-mark::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.settings-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text);
+}
+.settings-toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+}
+.settings-toggle input { display: none; }
+.settings-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-lighter);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.settings-toggle-slider::before {
+  content: "";
+  position: absolute;
+  left: 3px; top: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: transform 0.2s, background 0.2s;
+}
+.settings-toggle input:checked + .settings-toggle-slider {
+  background: var(--accent);
+}
+.settings-toggle input:checked + .settings-toggle-slider::before {
+  transform: translateX(18px);
+  background: #fff;
+}
+.settings-btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.settings-btn {
+  background: var(--bg-lighter);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.settings-btn:hover { background: var(--bg-hover); }
+.settings-btn.danger {
+  color: var(--red);
+  border-color: rgba(237,66,69,0.3);
+}
+.settings-btn.danger:hover {
+  background: rgba(237,66,69,0.15);
+}
+
+/* ─── 새 알고리즘 비주얼 ─── */
+
+/* gapRatio (후나츠 주기 비율) */
+.av-gapratio { position: relative; padding-top: 4px; }
+.av-gapratio-ref {
+  position: absolute;
+  top: 0; left: 40px; right: 40px;
+  height: 100%;
+  border-left: 1px dashed var(--text-muted);
+  pointer-events: none;
+}
+.av-gapratio-ref-label {
+  position: absolute;
+  top: -2px; left: 2px;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+.av-gapratio-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+  opacity: 0;
+  transform: translateX(-10px);
+}
+.algo-detail.open .av-gapratio-row {
+  animation: avSlideRight 0.3s ease forwards;
+  animation-delay: var(--d);
+}
+.av-gapratio-num {
+  min-width: 24px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: right;
+  color: var(--text-dim);
+}
+.av-gapratio-track {
+  flex: 1;
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: 5px;
+  overflow: hidden;
+}
+.av-gapratio-fill {
+  height: 100%;
+  border-radius: 5px;
+  width: 0;
+  background: var(--c);
+}
+.algo-detail.open .av-gapratio-fill {
+  animation: avFillBar 0.4s ease forwards;
+  animation-delay: var(--d);
+}
+.av-gapratio-val {
+  min-width: 32px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+/* acValue (AC값 복잡도) */
+.av-acvalue { text-align: center; }
+.av-acvalue-nums {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+.av-acvalue-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+}
+.algo-detail.open .av-acvalue-num {
+  animation: avPopIn 0.3s ease forwards;
+  animation-delay: var(--d);
+}
+.av-acvalue-diffs {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.av-acvalue-diff {
+  padding: 2px 5px;
+  font-size: 9px;
+  font-weight: 600;
+  background: var(--bg-lighter);
+  border-radius: 3px;
+  color: var(--text-dim);
+  opacity: 0;
+}
+.av-acvalue-diff.more {
+  color: var(--accent);
+  background: transparent;
+}
+.algo-detail.open .av-acvalue-diff {
+  animation: avFadeIn 0.2s ease forwards;
+  animation-delay: var(--d);
+}
+.av-acvalue-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--accent);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 12px;
+  opacity: 0;
+}
+.algo-detail.open .av-acvalue-badge {
+  animation: avPopIn 0.3s ease forwards;
+  animation-delay: var(--d);
+}
+
+/* rangeGrid (번호대 구간 분포) */
+.av-rangegrid {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+.av-rangegrid-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  opacity: 0;
+  transform: translateY(10px);
+}
+.algo-detail.open .av-rangegrid-col {
+  animation: avSlideUp 0.3s ease forwards;
+  animation-delay: var(--d);
+}
+.av-rangegrid-header {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #222;
+}
+.av-rangegrid-ball {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--bg-lighter);
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* sumRange (합계 범위) */
+.av-sumrange { padding: 8px 0; }
+.av-sumrange-track {
+  position: relative;
+  height: 24px;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  margin-bottom: 4px;
+}
+.av-sumrange-zone {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: var(--lo);
+  width: calc(var(--hi) - var(--lo));
+  background: rgba(88,101,242,0.25);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.av-sumrange-zone-label {
+  font-size: 9px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.av-sumrange-avg {
+  position: absolute;
+  top: -4px; bottom: -4px;
+  left: var(--pos);
+  width: 2px;
+  background: var(--accent);
+}
+.av-sumrange-avg-label {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.av-sumrange-current {
+  position: absolute;
+  top: 50%;
+  left: var(--pos);
+  width: 10px; height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--green);
+}
+.av-sumrange-current-label {
+  position: absolute;
+  bottom: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--green);
+  font-weight: 700;
+}
+.av-sumrange-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+/* noRepeat (반복 회피) */
+.av-norepeat {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+.av-norepeat-slot {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  background: var(--bg-lighter);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  opacity: 0;
+  transform: scale(0.5);
+}
+.algo-detail.open .av-norepeat-slot {
+  animation: avPopIn 0.3s ease forwards;
+  animation-delay: var(--d);
+}
+.av-norepeat-slot.repeat {
+  border-color: var(--red);
+  color: var(--red);
+}
+.av-norepeat-penalty {
+  position: absolute;
+  bottom: -12px;
+  font-size: 8px;
+  color: var(--red);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* 비주얼 공통 키프레임 */
+@keyframes avSlideRight {
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes avFillBar {
+  to { width: var(--w); }
+}
+@keyframes avSlideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes avFadeIn {
+  to { opacity: 1; }
+}
+@keyframes avPopIn {
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ─── 용어 툴팁 ─── */
+.term-tip {
+  border-bottom: 1px dotted var(--accent);
+  cursor: pointer;
+  color: var(--text-bright);
+  transition: color 0.15s;
+}
+.term-tip:hover {
+  color: var(--accent);
+}
+.term-tip-popup {
+  position: fixed;
+  z-index: 25000;
+  max-width: 320px;
+  padding: 10px 14px;
+  background: var(--bg-darkest, #1a1a2e);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.6;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s, transform 0.15s;
+  pointer-events: none;
+}
+.term-tip-popup.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* ─── 확인 모달 ─── */
+.confirm-modal-box {
+  max-width: 360px;
+  text-align: center;
+}
+.confirm-modal-box h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--text-bright);
+}
+.confirm-modal-box p {
+  margin: 0 0 18px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.confirm-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.confirm-modal-ok-btn {
+  padding: 9px 28px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: var(--red, #ed4245);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.confirm-modal-ok-btn:hover {
+  background: #c03537;
+}
+#confirm-modal .modal-btn-cancel {
+  padding: 9px 28px;
+  font-size: 13px;
+}
+
+/* ═══ 백테스트 프로그래스 모달 ═══ */
+
+.backtest-modal-overlay {
+  z-index: 9999;
+}
+
+.backtest-modal-box {
+  max-width: 420px;
+  padding: 32px 28px 24px;
+  text-align: center;
+}
+
+.backtest-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+/* 로또 공 바운스 애니메이션 */
+.backtest-anim {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  height: 48px;
+  align-items: flex-end;
+}
+
+.bt-ball {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-block;
+  animation: bt-bounce 1.4s ease-in-out infinite;
+}
+
+.bt-ball-1 { background: linear-gradient(135deg, #fcc419, #fab005); animation-delay: 0s; }
+.bt-ball-2 { background: linear-gradient(135deg, #74c0fc, #339af0); animation-delay: 0.12s; }
+.bt-ball-3 { background: linear-gradient(135deg, #ff6b6b, #e03131); animation-delay: 0.24s; }
+.bt-ball-4 { background: linear-gradient(135deg, #868e96, #495057); animation-delay: 0.36s; }
+.bt-ball-5 { background: linear-gradient(135deg, #69db7c, #2f9e44); animation-delay: 0.48s; }
+.bt-ball-6 { background: linear-gradient(135deg, #b197fc, #7950f2); animation-delay: 0.60s; }
+
+@keyframes bt-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+/* 프로그래스 바 */
+.backtest-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.backtest-bar-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backtest-bar-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 80px;
+  text-align: right;
+}
+
+.backtest-bar-track {
+  flex: 1;
+  height: 10px;
+  background: var(--bg-secondary);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.backtest-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+  width: 0%;
+}
+
+.backtest-bar-fill.bt-lotto {
+  background: linear-gradient(90deg, #339af0, #1c7ed6);
+}
+
+.backtest-bar-fill.bt-pension {
+  background: linear-gradient(90deg, #20c997, #099268);
+}
+
+.backtest-bar-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 32px;
+  text-align: left;
+}
+
+/* 팁 텍스트 */
+.backtest-tip {
+  font-size: 11px;
+  color: var(--text-secondary);
+  min-height: 16px;
+  transition: opacity 0.4s ease;
+}
+
+/* ═══ 백테스트 결과 테이블 ═══ */
+
+.backtest-summary {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.backtest-summary-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.backtest-summary-title::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 14px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.backtest-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.backtest-table th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.backtest-table td {
+  text-align: center;
+  padding: 5px 4px;
+  color: var(--text-primary);
+}
+
+.backtest-table tbody tr {
+  border-bottom: 1px solid var(--border-color-light, rgba(128,128,128,0.1));
+}
+
+.backtest-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.backtest-rank {
+  font-weight: 700;
+  width: 28px;
+}
+
+.backtest-rank-1 { color: #fab005; }
+.backtest-rank-2 { color: #868e96; }
+.backtest-rank-3 { color: #e67700; }
+
+.backtest-name {
+  text-align: left !important;
+  font-weight: 600;
+}
+
+.backtest-vs-positive { color: #2f9e44; font-weight: 700; }
+.backtest-vs-negative { color: #e03131; font-weight: 700; }
+
+.backtest-loading {
+  text-align: center;
+  padding: 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
 /* ─── 반응형 ─── */
 @media (max-width: 1100px) {
   .pension-freq-grid {
     grid-template-columns: repeat(4, 1fr);
   }
   .pension-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .adv-grid {
+    grid-template-columns: 1fr;
+  }
+  .settings-grid {
     grid-template-columns: 1fr;
   }
 }
