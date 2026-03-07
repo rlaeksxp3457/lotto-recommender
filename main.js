@@ -63,6 +63,11 @@ function setupAutoUpdater() {
 
     autoUpdater.on("update-available", (info) => {
       mainWindow?.webContents.send("app-update", { type: "available", version: info.version });
+      tray?.displayBalloon({
+        title: "로또 추천기 업데이트",
+        content: `새 버전 v${info.version}이 있습니다.`,
+        iconType: "info",
+      });
     });
 
     autoUpdater.on("update-not-available", () => {
@@ -135,6 +140,7 @@ function createTray() {
     { label: "종료", click: () => { app.isQuitting = true; app.quit(); } },
   ]));
   tray.on("double-click", () => { mainWindow?.show(); mainWindow?.focus(); });
+  tray.on("balloon-click", () => { mainWindow?.show(); mainWindow?.focus(); });
 }
 
 // ── 앱 시작 ──
@@ -153,6 +159,8 @@ app.whenReady().then(() => {
   // 앱 시작 즉시 업데이트 확인
   if (updater) {
     updater.checkForUpdates().catch(() => {});
+    // 5분마다 주기적 업데이트 체크
+    setInterval(() => updater.checkForUpdates().catch(() => {}), 5 * 60 * 1000);
   }
 });
 

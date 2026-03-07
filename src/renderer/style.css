@@ -2914,6 +2914,17 @@ body {
   cursor: default;
 }
 
+.ticket-bottom-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ticket-bottom-actions .ticket-save-all-btn {
+  flex: 1;
+  margin-top: 0;
+}
+
 /* ─── 로또 당첨 이력 테이블 ─── */
 .lotto-history-wrap {
   overflow-x: auto;

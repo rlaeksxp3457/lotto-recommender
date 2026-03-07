@@ -96,6 +96,15 @@ export async function generateTop5() {
   const saveAllBtn = document.createElement("button");
   saveAllBtn.className = "ticket-save-all-btn";
   saveAllBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg> 5게임 모두 저장';
+
+  const markAllSaved = () => {
+    gamesWrap.querySelectorAll(".ticket-save-btn").forEach(b => {
+      b.disabled = true;
+      b.innerHTML = "\u2713";
+      b.classList.add("saved");
+    });
+  };
+
   saveAllBtn.addEventListener("click", async () => {
     const round = (state.summary?.lastRound || 0) + 1;
     saveAllBtn.disabled = true;
@@ -109,13 +118,8 @@ export async function generateTop5() {
     }
     if (ok === games.length) {
       showToast(`5게임이 내 번호에 저장되었습니다.`, "success");
-      saveAllBtn.innerHTML = "✓ 저장됨";
-      // 개별 버튼도 저장됨 표시
-      gamesWrap.querySelectorAll(".ticket-save-btn").forEach(b => {
-        b.disabled = true;
-        b.innerHTML = "✓";
-        b.classList.add("saved");
-      });
+      saveAllBtn.innerHTML = "\u2713 저장됨";
+      markAllSaved();
     } else {
       showToast(`${ok}/${games.length}게임 저장 완료`, ok > 0 ? "success" : "error");
       saveAllBtn.disabled = false;
@@ -123,10 +127,53 @@ export async function generateTop5() {
     }
   });
 
+  // 복사 + 저장 버튼
+  const copyAndSaveBtn = document.createElement("button");
+  copyAndSaveBtn.className = "ticket-save-all-btn";
+  copyAndSaveBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 복사 + 저장';
+  copyAndSaveBtn.addEventListener("click", async () => {
+    const round = (state.summary?.lastRound || 0) + 1;
+    copyAndSaveBtn.disabled = true;
+    copyAndSaveBtn.innerHTML = '<span class="spinner"></span> 처리 중...';
+
+    // 클립보드 복사
+    const lines = games.map((g, i) =>
+      `${String.fromCharCode(65 + i)}: ${g.numbers.join(", ")}`
+    );
+    const text = `\u{1F3B1} 로또 6/45 추천번호 (${round}회)\n${lines.join("\n")}`;
+    await navigator.clipboard.writeText(text);
+
+    // 내 번호 저장
+    let ok = 0;
+    for (const g of games) {
+      const res = await window.api.myNumbersSave({
+        type: "lotto", round, numbers: [...g.numbers],
+      });
+      if (!res.error) ok++;
+    }
+
+    if (ok === games.length) {
+      showToast("5게임이 복사 및 저장되었습니다.", "success");
+      copyAndSaveBtn.innerHTML = "\u2713 복사 및 저장됨";
+      saveAllBtn.innerHTML = "\u2713 저장됨";
+      saveAllBtn.disabled = true;
+      markAllSaved();
+    } else {
+      showToast(`복사 완료, ${ok}/${games.length}게임 저장`, ok > 0 ? "success" : "error");
+      copyAndSaveBtn.disabled = false;
+      copyAndSaveBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 복사 + 저장';
+    }
+  });
+
+  const bottomActions = document.createElement("div");
+  bottomActions.className = "ticket-bottom-actions";
+  bottomActions.appendChild(saveAllBtn);
+  bottomActions.appendChild(copyAndSaveBtn);
+
   container.appendChild(header);
   container.appendChild(gamesWrap);
   container.appendChild(footer);
-  container.appendChild(saveAllBtn);
+  container.appendChild(bottomActions);
 
   btn.disabled = false;
   btn.innerHTML = `
