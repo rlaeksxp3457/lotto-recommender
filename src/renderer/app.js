@@ -13,6 +13,7 @@ import { updateDataInfo, initUpdate, checkUpdateNeeded } from "./modules/update.
 import { tutorial, initTutorial } from "./modules/tutorial.js";
 import { initPension, generatePensionTop5, generatePensionRecommendations } from "./modules/pension.js";
 import { initMyLotto, initMyPension, refreshMyNumbers } from "./modules/mynumbers.js";
+import { initChangelog } from "./modules/changelog.js";
 
 // ── UI 초기화 ──
 initTitlebar();
@@ -102,6 +103,7 @@ async function showVersion() {
     const el = document.getElementById("app-version");
     if (el) el.textContent = `v${ver}`;
   } catch { /* ignore */ }
+  initChangelog();
 }
 
 showVersion();
