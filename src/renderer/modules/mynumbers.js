@@ -5,6 +5,53 @@ import { showToast, ballColor } from "./utils.js";
 
 // ─── 유틸 ───
 
+function formatAmount(amount) {
+  if (!amount || amount === 0) return "0원";
+  if (amount >= 100000000) {
+    const eok = Math.floor(amount / 100000000);
+    const man = Math.floor((amount % 100000000) / 10000);
+    return man > 0 ? `${eok.toLocaleString()}억 ${man.toLocaleString()}만원` : `${eok.toLocaleString()}억원`;
+  }
+  if (amount >= 10000) return `${Math.floor(amount / 10000).toLocaleString()}만원`;
+  return `${amount.toLocaleString()}원`;
+}
+
+function buildPrizeInfoHtml(prizeInfo, myRank) {
+  if (!prizeInfo) return "";
+  const rankLabels = ["1등", "2등", "3등", "4등", "5등"];
+  let rows = "";
+  for (const p of prizeInfo.prizes) {
+    const highlight = (myRank > 0 && myRank === p.rank) ? ' class="my-rank"' : "";
+    rows += `<tr${highlight}>
+      <td>${rankLabels[p.rank - 1]}</td>
+      <td>${formatAmount(p.amount)}</td>
+      <td>${p.winners.toLocaleString()}명</td>
+      <td>${formatAmount(p.totalAmount)}</td>
+    </tr>`;
+  }
+
+  const wt = prizeInfo.winTypes || {};
+  const winTypeText = [
+    wt.auto ? `자동 ${wt.auto}` : "",
+    wt.semiAuto ? `반자동 ${wt.semiAuto}` : "",
+    wt.manual ? `수동 ${wt.manual}` : "",
+  ].filter(Boolean).join(" / ");
+
+  return `
+    <div class="result-prize-info">
+      <div class="prize-summary-row">
+        <span>총 판매금액 <strong>${formatAmount(prizeInfo.totalSales)}</strong></span>
+        <span>총 당첨자 <strong>${(prizeInfo.totalWinners || 0).toLocaleString()}명</strong></span>
+      </div>
+      ${winTypeText ? `<div class="prize-win-types">1등 당첨 유형: ${winTypeText}</div>` : ""}
+      <table class="prize-table">
+        <thead><tr><th>등수</th><th>1인당 당첨금</th><th>당첨자 수</th><th>총 당첨금</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
 function createLottoBall(n) {
   const el = document.createElement("span");
   el.className = `lotto-ball ${ballColor(n)}`;
@@ -419,6 +466,7 @@ function renderMyNumbersList(items, containerId, type) {
             <span class="mini-ball bonus">${item.result.bonusNo}</span>
             <span class="bonus-label">보너스</span>
           </div>
+          ${buildPrizeInfoHtml(item.result.prizeInfo, item.result.rank)}
         `;
       } else {
         const winDisplay = `${item.result.winGroup}조 ${item.result.winDigits.join("")}`;

@@ -9,7 +9,7 @@ import { generateRecommendations } from "./modules/recommend.js";
 import { renderNeverDrawnInfo, generateNeverDrawn } from "./modules/neverdrawn.js";
 import { renderFrequencyChart, renderInsights } from "./modules/charts.js";
 import { renderLottoHistory } from "./modules/history.js";
-import { updateDataInfo, initUpdate } from "./modules/update.js";
+import { updateDataInfo, initUpdate, checkUpdateNeeded } from "./modules/update.js";
 import { tutorial, initTutorial } from "./modules/tutorial.js";
 import { initPension, generatePensionTop5, generatePensionRecommendations } from "./modules/pension.js";
 import { initMyLotto, initMyPension, refreshMyNumbers } from "./modules/mynumbers.js";
@@ -84,6 +84,9 @@ async function init() {
   // 내 번호 초기화
   await initMyLotto();
   await initMyPension();
+
+  // 업데이트 필요 여부 체크 (버튼 반짝임)
+  checkUpdateNeeded();
 
   // 첫 실행 튜토리얼
   if (!localStorage.getItem("tutorial-done")) {

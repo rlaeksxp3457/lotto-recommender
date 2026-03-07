@@ -3,10 +3,12 @@ const path = require("path");
 const { app } = require("electron");
 const { EMBEDDED_DATA: LOTTO_EMBEDDED } = require("./analyzer");
 const { EMBEDDED_DATA: PENSION_EMBEDDED } = require("./pension_analyzer");
+const EMBEDDED_PRIZE = require("./prize_data");
 
 const DATA_PATH = path.join(app.getPath("userData"), "my_numbers.json");
 const LOTTO_UPDATES_PATH = path.join(app.getPath("userData"), "updates.json");
 const PENSION_UPDATES_PATH = path.join(app.getPath("userData"), "pension_updates.json");
+const PRIZE_PATH = path.join(app.getPath("userData"), "prize_data.json");
 
 // 로컬 당첨 이력에서 해당 회차 조회
 function findLottoRound(round) {
@@ -153,6 +155,15 @@ function setupMyNumbersIpc(ipcMain) {
       result.winNumbers = winNumbers;
       result.bonusNo = bonusNo;
       result.drawDate = record[1];
+
+      // 당첨 상세 정보 추가 (로컬 → 임베디드 순)
+      try {
+        let prizeData = EMBEDDED_PRIZE;
+        if (fs.existsSync(PRIZE_PATH)) {
+          prizeData = JSON.parse(fs.readFileSync(PRIZE_PATH, "utf-8"));
+        }
+        result.prizeInfo = prizeData[entry.round] || null;
+      } catch { /* ignore */ }
 
       entry.result = result;
       saveMyNumbers(data);

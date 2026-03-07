@@ -168,6 +168,41 @@ body {
   color: #999;
 }
 
+/* ─── 데이터 업데이트 프로그래스 모달 ─── */
+.data-update-modal-box {
+  max-width: 400px;
+  min-width: 320px;
+}
+
+.data-update-modal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0 8px;
+}
+
+.data-update-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.data-update-status {
+  font-size: 13px;
+  color: #bbb;
+  text-align: center;
+  line-height: 1.5;
+  min-height: 20px;
+}
+
 /* ═══ 앱 본체 (사이드바 + 콘텐츠) ═══ */
 
 .app-body {
@@ -258,6 +293,24 @@ body {
 .update-btn.loading {
   opacity: 0.6;
   pointer-events: none;
+}
+
+.update-btn.needs-update {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.update-btn.needs-update .nav-icon {
+  animation: spin-icon 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { color: var(--green) !important; background: transparent; }
+  50% { color: #fff !important; background: rgba(35, 165, 89, 0.25); }
+}
+
+@keyframes spin-icon {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
 }
 
 /* ─── 드롭다운 ─── */
@@ -2881,12 +2934,21 @@ body {
   top: 0;
   z-index: 1;
 }
-.lotto-history-table tbody tr {
+.lotto-history-table tbody tr.history-row {
   border-bottom: 1px solid var(--bg-lighter);
   transition: background 0.15s;
+  cursor: pointer;
 }
-.lotto-history-table tbody tr:hover {
+.lotto-history-table tbody tr.history-row:hover,
+.lotto-history-table tbody tr.history-row.active {
   background: var(--bg-hover);
+}
+.lotto-history-table tbody tr.history-detail-row {
+  display: none;
+}
+.lotto-history-table tbody tr.history-detail-row.open {
+  display: table-row;
+  border-bottom: 1px solid var(--bg-lighter);
 }
 .lotto-history-table td {
   padding: 8px 12px;
@@ -2925,6 +2987,71 @@ body {
 .history-ball.c-red    { background: #d9534f; }
 .history-ball.c-gray   { background: #6b7280; }
 .history-ball.c-green  { background: #23a559; }
+
+/* ─── 당첨 상세 정보 (이력 + 내 번호 공통) ─── */
+.history-prize-detail,
+.result-prize-info {
+  padding: 10px 12px;
+  background: var(--bg-dark);
+  border-radius: var(--radius);
+}
+.prize-no-data {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 0;
+}
+.prize-summary-row {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.prize-summary-row strong {
+  color: var(--text-primary);
+}
+.prize-win-types {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.prize-total-sales {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.prize-total-sales strong {
+  color: var(--text-primary);
+}
+.prize-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.prize-table thead th {
+  text-align: left;
+  padding: 4px 8px;
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+}
+.prize-table tbody td {
+  padding: 4px 8px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--bg-lighter);
+}
+.prize-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.prize-table tbody tr.my-rank td {
+  color: var(--accent);
+  font-weight: 700;
+  background: rgba(88,101,242,0.1);
+}
+.result-prize-info {
+  margin-top: 8px;
+}
 
 /* ─── 배치 저장 폼 ─── */
 .my-batch-header {

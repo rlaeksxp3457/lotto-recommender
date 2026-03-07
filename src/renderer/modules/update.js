@@ -40,58 +40,57 @@ export function initUpdate() {
 
   dropdownMenu.addEventListener("click", (e) => e.stopPropagation());
 
+  // 데이터 업데이트 프로그래스 모달
+  const dataUpdateModal = document.getElementById("data-update-modal");
+  const dataUpdateStatus = document.getElementById("data-update-status");
+
+  function showDataUpdateModal(text) {
+    if (dataUpdateStatus) dataUpdateStatus.textContent = text;
+    if (dataUpdateModal) dataUpdateModal.classList.remove("hidden");
+  }
+
+  function hideDataUpdateModal() {
+    if (dataUpdateModal) dataUpdateModal.classList.add("hidden");
+  }
+
   // 업데이트 진행률 수신
   window.api.onUpdateProgress((msg) => {
-    const progressEl = document.getElementById("update-progress");
-    if (progressEl) progressEl.textContent = msg;
+    if (dataUpdateStatus) dataUpdateStatus.textContent = msg;
   });
 
   // 연금복권 업데이트 진행률 수신
   window.api.onPensionUpdateProgress((msg) => {
-    const progressEl = document.getElementById("update-progress");
-    if (progressEl) progressEl.textContent = msg;
+    if (dataUpdateStatus) dataUpdateStatus.textContent = msg;
   });
-
-  // 진행률 표시 헬퍼
-  function showProgress(text) {
-    let progressEl = document.getElementById("update-progress");
-    if (!progressEl) {
-      progressEl = document.createElement("div");
-      progressEl.id = "update-progress";
-      progressEl.className = "update-progress";
-      updateBtn.parentElement.appendChild(progressEl);
-    }
-    progressEl.textContent = text;
-    progressEl.style.display = "block";
-    return progressEl;
-  }
 
   // 로또 6/45 온라인 업데이트
   document.getElementById("btn-online-update").addEventListener("click", async () => {
     dropdownWrap.classList.remove("open");
     dropdownMenu.classList.add("hidden");
     updateBtn.classList.add("loading");
-
-    const progressEl = showProgress("로또 6/45 업데이트 확인 중...");
+    showDataUpdateModal("로또 6/45 업데이트 확인 중...");
 
     try {
       const result = await window.api.updateData();
       if (result.error) {
         showToast(result.error, "error");
-      } else if (result.updated === 0) {
+      } else if (result.updated === 0 && result.message === "이미 최신 데이터입니다.") {
         showToast(result.message, "info");
       } else {
-        state.summary = result.summary;
-        updateDataInfo();
-        renderFrequencyChart();
-        renderInsights();
-        renderNeverDrawnInfo();
+        if (result.summary) {
+          state.summary = result.summary;
+          updateDataInfo();
+          renderFrequencyChart();
+          renderInsights();
+          renderNeverDrawnInfo();
+        }
         showToast(result.message, "success");
       }
     } catch { showToast("업데이트 실패: 네트워크 오류", "error"); }
 
     updateBtn.classList.remove("loading");
-    progressEl.style.display = "none";
+    hideDataUpdateModal();
+    checkUpdateNeeded();
   });
 
   // 연금복권720+ 온라인 업데이트
@@ -99,8 +98,7 @@ export function initUpdate() {
     dropdownWrap.classList.remove("open");
     dropdownMenu.classList.add("hidden");
     updateBtn.classList.add("loading");
-
-    const progressEl = showProgress("연금복권720+ 업데이트 확인 중...");
+    showDataUpdateModal("연금복권720+ 업데이트 확인 중...");
 
     try {
       const result = await window.api.pensionUpdateData();
@@ -121,7 +119,8 @@ export function initUpdate() {
     } catch { showToast("연금복권 업데이트 실패: 네트워크 오류", "error"); }
 
     updateBtn.classList.remove("loading");
-    progressEl.style.display = "none";
+    hideDataUpdateModal();
+    checkUpdateNeeded();
   });
 
   // CSV 업로드
@@ -143,6 +142,43 @@ export function initUpdate() {
 
   // 앱 자동 업데이트 알림
   initAppUpdate();
+}
+
+// 가장 최근 추첨일의 YYYYMMDD 문자열 반환. 추첨시각 이전이면 지난주로.
+function getLastDrawDate(kst, dayOfWeek, hour, minute) {
+  const d = new Date(kst);
+  const diff = (d.getDay() - dayOfWeek + 7) % 7;
+  d.setDate(d.getDate() - diff);
+  d.setHours(hour, minute, 0, 0);
+  if (d > kst) d.setDate(d.getDate() - 7);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}${m}${dd}`;
+}
+
+export function checkUpdateNeeded() {
+  const now = new Date();
+  const kst = new Date(now.getTime() + (540 + now.getTimezoneOffset()) * 60000);
+  let needsUpdate = false;
+
+  // 로또: 토요일(6) 21:15 이후
+  if (state.summary?.dateRange?.to) {
+    const lastData = state.summary.dateRange.to.replace(/-/g, "");
+    const lastDraw = getLastDrawDate(kst, 6, 21, 15);
+    if (lastData < lastDraw) needsUpdate = true;
+  }
+
+  // 연금복권: 목요일(4) 19:35 이후
+  if (state.pensionSummary?.dateRange?.to) {
+    const lastData = state.pensionSummary.dateRange.to.replace(/-/g, "");
+    const lastDraw = getLastDrawDate(kst, 4, 19, 35);
+    if (lastData < lastDraw) needsUpdate = true;
+  }
+
+  const btn = document.getElementById("btn-update");
+  if (needsUpdate) btn.classList.add("needs-update");
+  else btn.classList.remove("needs-update");
 }
 
 function initAppUpdate() {

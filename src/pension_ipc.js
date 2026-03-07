@@ -111,7 +111,13 @@ function setupPensionIpc(ipcMain, getWindow) {
           },
           signal: AbortSignal.timeout(10000),
         });
-        const json = await resp.json();
+        const text = await resp.text();
+        if (text.includes("<!DOCTYPE") || text.includes("<html")) {
+          consecutive404++;
+          targetRound += 6;
+          continue;
+        }
+        const json = JSON.parse(text);
 
         if (!json.data || !json.data.result || json.data.result.length === 0) {
           consecutive404++;
