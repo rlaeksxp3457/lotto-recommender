@@ -2,6 +2,7 @@ import { showToast, fmt } from "./utils.js";
 import { state } from "./state.js";
 import { renderFrequencyChart, renderInsights } from "./charts.js";
 import { renderNeverDrawnInfo } from "./neverdrawn.js";
+import { renderLottoHistory } from "./history.js";
 import {
   renderPensionFreqChart, renderPensionStats, updatePensionSidebarInfo,
   renderPensionHistory, renderPensionAdjacentPairs, renderPensionDigitSumDist,
@@ -83,6 +84,7 @@ export function initUpdate() {
           renderFrequencyChart();
           renderInsights();
           renderNeverDrawnInfo();
+          renderLottoHistory();
         }
         showToast(result.message, "success");
       }
@@ -137,6 +139,7 @@ export function initUpdate() {
     renderFrequencyChart();
     renderInsights();
     renderNeverDrawnInfo();
+    renderLottoHistory();
     showToast(result.message, "success");
   });
 
