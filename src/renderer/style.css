@@ -2553,6 +2553,21 @@ body {
 .my-ticket-check-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .my-ticket-check-btn.pension { background: #0077b6; }
 .my-ticket-check-btn.pension:hover { background: #0096c7; }
+.my-ticket-copy-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.my-ticket-copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(88,101,242,0.08);
+}
 .my-ticket-del-btn {
   background: none;
   border: 1px solid #ccc;

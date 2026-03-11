@@ -708,6 +708,25 @@ function renderTicketList(items, containerId, type) {
       actions.appendChild(checkBtn);
     }
 
+    const copyBtn = document.createElement("button");
+    copyBtn.className = "my-ticket-copy-btn";
+    copyBtn.textContent = "복사";
+    copyBtn.addEventListener("click", async () => {
+      const lines = group.entries.map((item, i) => {
+        const label = String.fromCharCode(65 + i);
+        if (type === "lotto") {
+          return `${label}: ${item.numbers.join(", ")}`;
+        } else {
+          return `${label}: ${item.group}조 ${item.digits.join("")}`;
+        }
+      });
+      const header = type === "lotto" ? `🎰 로또 ${group.round}회` : `💰 연금복권 ${group.round}회`;
+      await navigator.clipboard.writeText(`${header}\n${lines.join("\n")}`);
+      copyBtn.textContent = "✓ 복사됨";
+      setTimeout(() => { copyBtn.textContent = "복사"; }, 1500);
+    });
+    actions.appendChild(copyBtn);
+
     const delBtn = document.createElement("button");
     delBtn.className = "my-ticket-del-btn";
     delBtn.textContent = "용지 삭제";
