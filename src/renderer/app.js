@@ -5,12 +5,12 @@ import { showToast } from "./modules/utils.js";
 import { initTabs, setupCounter, onTabChange } from "./modules/tabs.js";
 import { initTitlebar } from "./modules/titlebar.js";
 import { generateTop5 } from "./modules/top5.js";
-import { generateRecommendations } from "./modules/recommend.js";
+import { generateRecommendations, initAlgoFilter } from "./modules/recommend.js";
 import { renderNeverDrawnInfo, generateNeverDrawn } from "./modules/neverdrawn.js";
 import { renderFrequencyChart, renderInsights } from "./modules/charts.js";
 import { renderLottoHistory } from "./modules/history.js";
 import { updateDataInfo, initUpdate, checkUpdateNeeded } from "./modules/update.js";
-import { tutorial, initTutorial } from "./modules/tutorial.js";
+import { initHelp } from "./modules/help.js";
 import { initPension, generatePensionTop5, generatePensionRecommendations } from "./modules/pension.js";
 import { initMyLotto, initMyPension, refreshMyNumbers } from "./modules/mynumbers.js";
 import { initAdvancedAnalysis } from "./modules/advanced.js";
@@ -25,21 +25,25 @@ document.addEventListener("drop", (e) => e.preventDefault());
 // ── UI 초기화 ──
 initTitlebar();
 initTabs();
-initTutorial();
+initHelp();
 initSettings();
 
 const getRecCount = setupCounter("rec-minus", "rec-plus", "rec-count", 1, 10, 1);
 const getNdCount = setupCounter("nd-minus", "nd-plus", "nd-count", 1, 20, 5);
 const getPensionRecCount = setupCounter("pension-rec-minus", "pension-rec-plus", "pension-rec-count", 1, 10, 1);
 
+// 알고리즘 필터 (init에서 getSelectedAlgos가 설정됨)
+let getLottoSelectedAlgos = null;
+let getPensionSelectedAlgos = null;
+
 // 버튼 이벤트
 document.getElementById("btn-top5").addEventListener("click", generateTop5);
-document.getElementById("btn-recommend").addEventListener("click", () => generateRecommendations(getRecCount));
+document.getElementById("btn-recommend").addEventListener("click", () => generateRecommendations(getRecCount, getLottoSelectedAlgos));
 document.getElementById("btn-neverdrawn").addEventListener("click", () => generateNeverDrawn(getNdCount));
 
 // 연금복권 버튼 이벤트
 document.getElementById("btn-pension-top5").addEventListener("click", generatePensionTop5);
-document.getElementById("btn-pension-rec").addEventListener("click", () => generatePensionRecommendations(getPensionRecCount));
+document.getElementById("btn-pension-rec").addEventListener("click", () => generatePensionRecommendations(getPensionRecCount, getPensionSelectedAlgos));
 
 initUpdate();
 
@@ -164,10 +168,14 @@ async function init() {
   renderNeverDrawnInfo();
   await renderLottoHistory();
   await generateTop5();
-  await generateRecommendations(getRecCount);
+
+  // 알고리즘 필터 초기화
+  getLottoSelectedAlgos = await initAlgoFilter("lotto");
+  await generateRecommendations(getRecCount, getLottoSelectedAlgos);
 
   // 연금복권 초기화
-  await initPension(getPensionRecCount);
+  getPensionSelectedAlgos = await initAlgoFilter("pension");
+  await initPension(getPensionRecCount, getPensionSelectedAlgos);
 
   // 내 번호 초기화
   await initMyLotto();
@@ -183,12 +191,9 @@ async function init() {
   // 백테스트 시작 (Worker 병렬 실행)
   const btModal = initBacktestModal();
   btModal.showModal();
-  window.api.startBacktest();
+  const backtestGames = parseInt(localStorage.getItem("backtest-games") || "100");
+  window.api.startBacktest(backtestGames);
 
-  // 첫 실행 튜토리얼
-  if (!localStorage.getItem("tutorial-done")) {
-    setTimeout(() => tutorial.start(), 800);
-  }
 }
 
 // ── 앱 버전 표시 ──
@@ -204,3 +209,17 @@ async function showVersion() {
 
 showVersion();
 init();
+
+// ── 상단 이동 플로팅 버튼 ──
+{
+  const btn = document.getElementById("scroll-top-btn");
+  const content = document.querySelector(".content");
+  if (btn && content) {
+    content.addEventListener("scroll", () => {
+      btn.classList.toggle("visible", content.scrollTop > 300);
+    });
+    btn.addEventListener("click", () => {
+      content.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+}

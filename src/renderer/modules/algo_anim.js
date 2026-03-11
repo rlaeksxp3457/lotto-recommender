@@ -577,6 +577,10 @@ export function createAnimatedAlgoDetail(howItWorks) {
     stepEl.className = "algo-step";
     stepEl.style.cssText = `--step-delay:${i * 2}s`;
 
+    // 번호 뱃지 + 텍스트를 한 행으로 묶기
+    const rowEl = document.createElement("div");
+    rowEl.className = "algo-step-row";
+
     const numEl = document.createElement("span");
     numEl.className = "algo-step-num";
     numEl.textContent = i + 1;
@@ -585,8 +589,9 @@ export function createAnimatedAlgoDetail(howItWorks) {
     textEl.className = "algo-step-text";
     textEl.innerHTML = applyGlossary(step.text);
 
-    stepEl.appendChild(numEl);
-    stepEl.appendChild(textEl);
+    rowEl.appendChild(numEl);
+    rowEl.appendChild(textEl);
+    stepEl.appendChild(rowEl);
 
     // 비주얼 영역
     if (step.visual && VISUALS[step.visual]) {

@@ -24,12 +24,23 @@ export function createBall(n, small = false, delay = 0) {
 
 export function fmt(n) { return n.toLocaleString(); }
 
+const TOAST_ICONS = { success: "\u2713", error: "\u2715", info: "\u2139", warning: "\u26A0" };
+
 export function showToast(msg, type = "info") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;
-  el.textContent = msg;
+  const icon = TOAST_ICONS[type] || "";
+  el.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  // 스태킹: 기존 토스트 위로 이동
+  const existing = document.querySelectorAll(".toast");
+  existing.forEach((t, i) => {
+    if (t !== el) t.style.transform = `translateY(-${(existing.length - i - 1) * 48}px)`;
+  });
+  setTimeout(() => {
+    el.classList.add("toast-out");
+    setTimeout(() => el.remove(), 300);
+  }, 3000);
 }
 
 export function showConfirm(message, title = "확인") {

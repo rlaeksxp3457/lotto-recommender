@@ -3,7 +3,7 @@
 import { state } from "./state.js";
 import { showToast, fmt } from "./utils.js";
 import { createAnimatedAlgoDetail } from "./algo_anim.js";
-import { renderBacktestSummary } from "./recommend.js";
+import { renderBacktestSummary, getBacktestRankBadge, updateCardBadges } from "./recommend.js";
 
 // ─── 유틸: 숫자 박스 생성 ───
 
@@ -231,13 +231,14 @@ export async function generatePensionTop5() {
 
 // ─── 전략별 추천 카드 ───
 
-export async function generatePensionRecommendations(getCount) {
+export async function generatePensionRecommendations(getCount, getSelectedAlgos) {
   const btn = document.getElementById("btn-pension-rec");
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>분석 중...';
 
   const count = getCount();
-  const result = await window.api.pensionGetRecommendations(count);
+  const selectedAlgos = getSelectedAlgos ? getSelectedAlgos() : null;
+  const result = await window.api.pensionGetRecommendations(count, selectedAlgos);
   const container = document.getElementById("pension-recommendations");
   container.innerHTML = "";
 
@@ -248,80 +249,210 @@ export async function generatePensionRecommendations(getCount) {
     return;
   }
 
-  // 백테스트 결과 테이블
-  renderBacktestSummary(container, "pension");
+  if (result.recommendations.length === 0) {
+    container.innerHTML = '<div class="my-numbers-empty">알고리즘을 1개 이상 선택해주세요.</div>';
+    btn.disabled = false;
+    btn.textContent = "다시 추천받기";
+    return;
+  }
 
-  result.recommendations.forEach((rec, idx) => {
-    const card = document.createElement("div");
-    card.className = "rec-card";
+  // 사용된 알고리즘 이름 수집
+  const usedAlgoNames = new Set(result.recommendations.map(r => r.name));
 
-    const setLabel = count > 1 ? ` #${rec.setIndex + 1}` : "";
+  // 백테스트 재실행 (초기 로드 시 app.js가 시작하므로 중복 방지)
+  if (state.pensionBacktest !== null) {
+    state.pensionBacktest = null;
+    const gc = parseInt(localStorage.getItem("backtest-games") || "100");
+    window.api.startBacktest(gc);
+  }
+
+  // 알고리즘별 그룹핑
+  const algoGroups = new Map();
+  result.recommendations.forEach(rec => {
+    if (!algoGroups.has(rec.name)) algoGroups.set(rec.name, []);
+    algoGroups.get(rec.name).push(rec);
+  });
+
+  const svgSave = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>';
+  const svgCopy = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
+
+  let cardIdx = 0;
+  for (const [algoName, recs] of algoGroups) {
+    const firstRec = recs[0];
+    const ticket = document.createElement("div");
+    ticket.className = "rec-ticket";
+    ticket.style.animationDelay = `${cardIdx * 80}ms`;
+
+    // 헤더 (다크블루 - pension 색상)
     const header = document.createElement("div");
-    header.className = "rec-card-header";
-    header.innerHTML = `
-      <h3>${rec.name}${setLabel}</h3>
-      <span class="desc">${rec.desc}</span>
-    `;
+    header.className = "ticket-header pension-color";
 
-    // 알고리즘 도움말 버튼 (첫 번째 세트에만 표시)
-    if (rec.howItWorks && rec.setIndex === 0) {
+    const titleRow = document.createElement("div");
+    titleRow.className = "ticket-header-title-row";
+    titleRow.innerHTML = `<span class="bt-badge-wrap" data-algo-name="${algoName}">${getBacktestRankBadge(algoName, "pension")}</span><span class="ticket-header-title">${algoName}</span>`;
+
+    // ℹ 버튼
+    if (firstRec.howItWorks) {
       const infoBtn = document.createElement("button");
-      infoBtn.className = "algo-info-btn";
-      infoBtn.innerHTML = "ℹ";
+      infoBtn.className = "algo-info-btn ticket-info-btn";
+      infoBtn.innerHTML = "\u2139";
       infoBtn.title = "알고리즘 동작 원리";
       infoBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        const detail = card.querySelector(".algo-detail");
+        const detail = ticket.querySelector(".algo-detail");
         if (detail) {
           detail.classList.toggle("open");
           infoBtn.classList.toggle("active");
         }
       });
-      header.appendChild(infoBtn);
+      titleRow.appendChild(infoBtn);
     }
 
-    card.appendChild(header);
+    header.appendChild(titleRow);
+    const descEl = document.createElement("span");
+    descEl.className = "ticket-header-sub";
+    descEl.textContent = firstRec.desc;
+    header.appendChild(descEl);
+    ticket.appendChild(header);
 
-    // 알고리즘 설명 패널 (애니메이션)
-    if (rec.howItWorks && rec.setIndex === 0) {
-      card.appendChild(createAnimatedAlgoDetail(rec.howItWorks));
+    // algo-detail 애니메이션 패널
+    if (firstRec.howItWorks) {
+      ticket.appendChild(createAnimatedAlgoDetail(firstRec.howItWorks));
     }
 
-    const digits = createNumberDisplay(rec.group, rec.digits, "", idx * 30);
+    // 게임 행들 (라이트 배경)
+    const gamesWrap = document.createElement("div");
+    gamesWrap.className = "ticket-games";
 
-    const stats = document.createElement("div");
-    stats.className = "rec-stats";
-    stats.innerHTML = `
-      <span>자릿수 합: <b>${rec.sum}</b></span>
-      <span>홀: <b>${rec.odd}</b> 짝: <b>${rec.even}</b></span>
-      <span>저(0-4): <b>${rec.low}</b> 고(5-9): <b>${rec.high}</b></span>
-    `;
+    recs.forEach((rec, idx) => {
+      const row = document.createElement("div");
+      row.className = "ticket-game";
 
-    // 저장 버튼
-    const saveBtn = document.createElement("button");
-    saveBtn.className = "rec-save-btn";
-    saveBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg> 저장';
-    saveBtn.addEventListener("click", async () => {
-      const round = (state.pensionSummary?.lastRound || 0) + 1;
-      saveBtn.disabled = true;
-      saveBtn.innerHTML = '<span class="spinner"></span>';
-      const res = await window.api.myNumbersSave({
-        type: "pension", round, group: rec.group, digits: [...rec.digits],
+      const label = document.createElement("div");
+      label.className = "ticket-game-label pension-label-color";
+      label.textContent = String.fromCharCode(65 + idx);
+
+      const digits = createNumberDisplay(rec.group, rec.digits, "ticket-size", cardIdx * 60 + idx * 40);
+
+      const stats = document.createElement("div");
+      stats.className = "ticket-game-stats";
+      stats.innerHTML = `<span class="tgs-sum">합${rec.sum}</span><span class="tgs-ratio">${rec.odd}:${rec.even}</span>`;
+
+      const saveBtn = document.createElement("button");
+      saveBtn.className = "ticket-save-btn";
+      saveBtn.title = "내 번호에 저장";
+      saveBtn.innerHTML = svgSave;
+      saveBtn.addEventListener("click", async () => {
+        const round = (state.pensionSummary?.lastRound || 0) + 1;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner"></span>';
+        const res = await window.api.myNumbersSave({
+          type: "pension", round, group: rec.group, digits: [...rec.digits],
+        });
+        if (res.error) {
+          showToast(res.error, "error");
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = svgSave;
+          return;
+        }
+        showToast(`${String.fromCharCode(65 + idx)}게임이 내 번호에 저장되었습니다.`, "success");
+        saveBtn.innerHTML = "\u2713";
+        saveBtn.classList.add("saved");
       });
-      if (res.error) {
-        showToast(res.error, "error");
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg> 저장';
-        return;
-      }
-      showToast(`${round}회 번호가 내 번호에 저장되었습니다.`, "success");
-      saveBtn.innerHTML = "✓ 저장됨";
+
+      row.appendChild(label);
+      row.appendChild(digits);
+      row.appendChild(stats);
+      row.appendChild(saveBtn);
+      gamesWrap.appendChild(row);
     });
 
-    card.appendChild(digits);
-    card.appendChild(stats);
-    card.appendChild(saveBtn);
-    container.appendChild(card);
+    ticket.appendChild(gamesWrap);
+
+    // 푸터 (2게임 이상: 전체 저장 + 복사 버튼)
+    if (recs.length > 1) {
+      const saveAllBtn = document.createElement("button");
+      saveAllBtn.className = "ticket-save-all-btn";
+      saveAllBtn.innerHTML = `${svgSave} 전체 저장`;
+
+      const markAllSaved = () => {
+        gamesWrap.querySelectorAll(".ticket-save-btn").forEach(b => {
+          b.disabled = true;
+          b.innerHTML = "\u2713";
+          b.classList.add("saved");
+        });
+      };
+
+      saveAllBtn.addEventListener("click", async () => {
+        const round = (state.pensionSummary?.lastRound || 0) + 1;
+        const batchId = "batch_" + Date.now();
+        saveAllBtn.disabled = true;
+        saveAllBtn.innerHTML = '<span class="spinner"></span> 저장 중...';
+        let ok = 0;
+        for (const rec of recs) {
+          const res = await window.api.myNumbersSave({
+            type: "pension", round, group: rec.group, digits: [...rec.digits], batchId,
+          });
+          if (!res.error) ok++;
+        }
+        if (ok === recs.length) {
+          showToast(`${recs.length}게임이 내 번호에 저장되었습니다.`, "success");
+          saveAllBtn.innerHTML = "\u2713 저장됨";
+          markAllSaved();
+        } else {
+          showToast(`${ok}/${recs.length}게임 저장 완료`, ok > 0 ? "success" : "error");
+          saveAllBtn.disabled = false;
+          saveAllBtn.innerHTML = `${svgSave} 전체 저장`;
+        }
+      });
+
+      const copyAndSaveBtn = document.createElement("button");
+      copyAndSaveBtn.className = "ticket-save-all-btn";
+      copyAndSaveBtn.innerHTML = `${svgCopy} 복사 + 저장`;
+      copyAndSaveBtn.addEventListener("click", async () => {
+        const round = (state.pensionSummary?.lastRound || 0) + 1;
+        const batchId = "batch_" + Date.now();
+        copyAndSaveBtn.disabled = true;
+        copyAndSaveBtn.innerHTML = '<span class="spinner"></span> 처리 중...';
+        const lines = recs.map((rec, i) =>
+          `${String.fromCharCode(65 + i)}: ${rec.group}조 ${rec.digits.join("")}`
+        );
+        const text = `\u{1F3B0} ${algoName} 추천번호 (${round}회)\n${lines.join("\n")}`;
+        await navigator.clipboard.writeText(text);
+        let ok = 0;
+        for (const rec of recs) {
+          const res = await window.api.myNumbersSave({
+            type: "pension", round, group: rec.group, digits: [...rec.digits], batchId,
+          });
+          if (!res.error) ok++;
+        }
+        if (ok === recs.length) {
+          showToast(`${recs.length}게임이 복사 및 저장되었습니다.`, "success");
+          copyAndSaveBtn.innerHTML = "\u2713 복사 및 저장됨";
+          saveAllBtn.innerHTML = "\u2713 저장됨";
+          saveAllBtn.disabled = true;
+          markAllSaved();
+        } else {
+          showToast(`복사 완료, ${ok}/${recs.length}게임 저장`, ok > 0 ? "success" : "error");
+          copyAndSaveBtn.disabled = false;
+          copyAndSaveBtn.innerHTML = `${svgCopy} 복사 + 저장`;
+        }
+      });
+
+      const bottomActions = document.createElement("div");
+      bottomActions.className = "ticket-bottom-actions";
+      bottomActions.appendChild(saveAllBtn);
+      bottomActions.appendChild(copyAndSaveBtn);
+      ticket.appendChild(bottomActions);
+    }
+
+    container.appendChild(ticket);
+    cardIdx++;
+  }
+
+  // 백테스트 결과 (카드 아래, 접이식)
+  renderBacktestSummary(container, "pension", usedAlgoNames, () => {
+    updateCardBadges(container, "pension");
   });
 
   btn.disabled = false;
@@ -610,7 +741,7 @@ export function renderPensionDigitSumDist() {
 
 // ─── 초기화 ───
 
-export async function initPension(getRecCount) {
+export async function initPension(getRecCount, getSelectedAlgos) {
   const result = await window.api.pensionInitData();
   if (result.error) {
     showToast(result.error, "error");
@@ -637,5 +768,5 @@ export async function initPension(getRecCount) {
 
   // 초기 추천 생성
   await generatePensionTop5();
-  await generatePensionRecommendations(getRecCount);
+  await generatePensionRecommendations(getRecCount, getSelectedAlgos);
 }

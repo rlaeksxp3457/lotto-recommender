@@ -461,9 +461,14 @@ const STRATEGIES = [
     ] },
 ];
 
-function getRecommendations(stats, count = 1) {
+function getAlgoNames() {
+  return STRATEGIES.map((s, i) => ({ index: i, name: s.name, desc: s.desc }));
+}
+
+function getRecommendations(stats, count = 1, selectedAlgos = null) {
   const results = [];
-  for (const { name, desc, fn, howItWorks } of STRATEGIES) {
+  STRATEGIES.forEach(({ name, desc, fn, howItWorks }, idx) => {
+    if (selectedAlgos && !selectedAlgos.includes(idx)) return;
     for (let i = 0; i < count; i++) {
       const nums  = fn(stats);
       const total = nums.reduce((a, b) => a + b, 0);
@@ -471,7 +476,7 @@ function getRecommendations(stats, count = 1) {
       const low   = nums.filter(n => n <= 22).length;
       results.push({ name, desc, howItWorks, numbers: nums, sum: total, odd, even: 6 - odd, low, high: 6 - low, setIndex: i });
     }
-  }
+  });
   return results;
 }
 
@@ -651,9 +656,6 @@ LottoStats.prototype.getAdvancedAnalysis = function (recentN = 20) {
 
 // ─── 백테스트 ───
 
-const TEST_WINDOW = 100;
-const SETS_PER_DRAW = 20;
-
 function theoreticalProb(k) {
   function C(n, r) {
     if (r > n || r < 0) return 0;
@@ -664,12 +666,17 @@ function theoreticalProb(k) {
   return C(6, k) * C(39, 6 - k) / C(45, 6);
 }
 
-function runBacktest(onProgress) {
+function runBacktest(onProgress, gamesCount = 100) {
   const records = getRecords();
   const total = records.length;
-  const testStart = Math.max(0, total - TEST_WINDOW);
-  const testCount = total - testStart;
+  if (total < 51) return [];
   const theoOver3 = [3, 4, 5, 6].reduce((a, k) => a + theoreticalProb(k), 0);
+
+  // 최신 1회차만 테스트 (직전까지를 훈련 데이터로)
+  const testIdx = total - 1;
+  const trainingRecords = records.slice(0, testIdx);
+  const testStats = new LottoStats(trainingRecords);
+  const actual = new Set(records[testIdx].numbers);
 
   const results = STRATEGIES.map(s => ({
     name: s.name,
@@ -677,30 +684,24 @@ function runBacktest(onProgress) {
     totalSets: 0,
   }));
 
-  for (let i = testStart; i < total; i++) {
-    const trainingRecords = records.slice(0, i);
-    if (trainingRecords.length < 50) continue;
-    const testStats = new LottoStats(trainingRecords);
-    const actual = new Set(records[i].numbers);
+  for (let s = 0; s < STRATEGIES.length; s++) {
+    for (let j = 0; j < gamesCount; j++) {
+      const picked = STRATEGIES[s].fn(testStats);
+      const matches = picked.filter(n => actual.has(n)).length;
+      results[s].matchCounts[matches]++;
+      results[s].totalSets++;
 
-    for (let s = 0; s < STRATEGIES.length; s++) {
-      for (let j = 0; j < SETS_PER_DRAW; j++) {
-        const picked = STRATEGIES[s].fn(testStats);
-        const matches = picked.filter(n => actual.has(n)).length;
-        results[s].matchCounts[matches]++;
-        results[s].totalSets++;
+      if (onProgress && j % 10 === 0) {
+        const pct = Math.round(((s * gamesCount + j) / (STRATEGIES.length * gamesCount)) * 100);
+        onProgress(pct);
       }
     }
-
-    if (onProgress) {
-      const pct = Math.round(((i - testStart + 1) / testCount) * 100);
-      onProgress(pct);
-    }
   }
+  if (onProgress) onProgress(100);
 
   return results.map(r => {
     const total = r.totalSets;
-    if (total === 0) return { name: r.name, avgMatches: 0, over3Rate: 0, vsTheory: "0" };
+    if (total === 0) return { name: r.name, avgMatches: 0, over3Rate: 0, vsTheory: "0", matchCounts: [0,0,0,0,0,0,0], totalSets: 0 };
     let avg = 0;
     for (let k = 0; k <= 6; k++) avg += k * r.matchCounts[k] / total;
     const over3 = (r.matchCounts[3] + r.matchCounts[4] + r.matchCounts[5] + r.matchCounts[6]) / total;
@@ -710,8 +711,10 @@ function runBacktest(onProgress) {
       avgMatches: parseFloat(avg.toFixed(4)),
       over3Rate: parseFloat((over3 * 100).toFixed(4)),
       vsTheory: (over3 >= theoOver3 ? "+" : "") + vs,
+      matchCounts: [...r.matchCounts],
+      totalSets: r.totalSets,
     };
   }).sort((a, b) => b.over3Rate - a.over3Rate);
 }
 
-module.exports = { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, getRecentRecords, EMBEDDED_DATA, runBacktest };
+module.exports = { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, getRecentRecords, EMBEDDED_DATA, runBacktest, getAlgoNames };

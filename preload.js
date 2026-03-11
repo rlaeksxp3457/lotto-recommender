@@ -3,7 +3,8 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("api", {
   // 데이터
   initData:           ()      => ipcRenderer.invoke("init-data"),
-  getRecommendations: (count) => ipcRenderer.invoke("get-recommendations", count),
+  getRecommendations: (count, algos) => ipcRenderer.invoke("get-recommendations", count, algos),
+  getAlgoNames:       ()            => ipcRenderer.invoke("get-algo-names"),
   getTop5:            ()      => ipcRenderer.invoke("get-top5"),
   getNeverDrawn:      (count) => ipcRenderer.invoke("get-never-drawn", count),
   getHistory:         (count) => ipcRenderer.invoke("get-history", count),
@@ -15,7 +16,8 @@ contextBridge.exposeInMainWorld("api", {
 
   // 연금복권720+
   pensionInitData:           ()      => ipcRenderer.invoke("pension-init-data"),
-  pensionGetRecommendations: (count) => ipcRenderer.invoke("pension-get-recommendations", count),
+  pensionGetRecommendations: (count, algos) => ipcRenderer.invoke("pension-get-recommendations", count, algos),
+  pensionGetAlgoNames:       ()            => ipcRenderer.invoke("pension-get-algo-names"),
   pensionGetTop5:            ()      => ipcRenderer.invoke("pension-get-top5"),
   pensionGetHistory:         (count) => ipcRenderer.invoke("pension-get-history", count),
   pensionUpdateData:         ()      => ipcRenderer.invoke("pension-update-data"),
@@ -30,10 +32,10 @@ contextBridge.exposeInMainWorld("api", {
   myNumbersCheckPension: (id)        => ipcRenderer.invoke("my-numbers-check-pension", id),
   myNumbersUpdateBatch:  (payload)   => ipcRenderer.invoke("my-numbers-update-batch", payload),
   myNumbersExport:       ()          => ipcRenderer.invoke("my-numbers-export"),
-  myNumbersImport:       ()          => ipcRenderer.invoke("my-numbers-import"),
+  myNumbersImport:       (code)      => ipcRenderer.invoke("my-numbers-import", code),
 
   // 백테스트
-  startBacktest:         ()   => ipcRenderer.invoke("start-backtest"),
+  startBacktest:         (games) => ipcRenderer.invoke("start-backtest", games),
   getBacktest:           ()   => ipcRenderer.invoke("get-backtest"),
   pensionGetBacktest:    ()   => ipcRenderer.invoke("pension-get-backtest"),
   onBacktestProgress:    (cb) => ipcRenderer.on("backtest-progress", (_e, d) => cb(d)),

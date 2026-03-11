@@ -361,20 +361,12 @@ export function initFilter(type) {
   const prefix = type === "lotto" ? "my-lotto" : "my-pension";
   document.getElementById(`${prefix}-filter`).addEventListener("change", () => loadAndRenderMyNumbers(type));
 
-  document.getElementById(`${prefix}-export-btn`).addEventListener("click", async () => {
-    const result = await window.api.myNumbersExport();
-    if (result.canceled) return;
-    if (result.error) { showToast(result.error, "error"); return; }
-    showToast(`${result.count}개 번호를 내보냈습니다.`, "success");
+  document.getElementById(`${prefix}-export-btn`).addEventListener("click", () => {
+    showExportModal();
   });
 
-  document.getElementById(`${prefix}-import-btn`).addEventListener("click", async () => {
-    const result = await window.api.myNumbersImport();
-    if (result.canceled) return;
-    if (result.error) { showToast(result.error, "error"); return; }
-    showToast(`${result.imported}개 번호를 가져왔습니다.${result.skipped > 0 ? ` (중복 ${result.skipped}개 건너뜀)` : ""}`, "success");
-    await loadAndRenderMyNumbers("lotto");
-    await loadAndRenderMyNumbers("pension");
+  document.getElementById(`${prefix}-import-btn`).addEventListener("click", () => {
+    showImportModal();
   });
 }
 
@@ -763,4 +755,75 @@ async function batchDelete(entries, type) {
   }
   showToast("삭제되었습니다.", "info");
   await loadAndRenderMyNumbers(type);
+}
+
+// ─── 내보내기 / 가져오기 모달 ───
+
+function showExportModal() {
+  const modal = document.getElementById("export-modal");
+  const step1 = document.getElementById("export-step1");
+  const step2 = document.getElementById("export-step2");
+  const genBtn = document.getElementById("export-generate-btn");
+  const codeArea = document.getElementById("export-code");
+  const countLabel = document.getElementById("export-count");
+  const copyBtn = document.getElementById("export-copy-btn");
+  const closeBtn = document.getElementById("export-close-btn");
+
+  step1.classList.remove("hidden");
+  step2.classList.add("hidden");
+  genBtn.disabled = false;
+  genBtn.textContent = "코드 생성";
+  modal.classList.remove("hidden");
+
+  genBtn.onclick = async () => {
+    genBtn.disabled = true;
+    genBtn.innerHTML = '<span class="spinner"></span>생성 중...';
+    const result = await window.api.myNumbersExport();
+    if (result.error) { showToast(result.error, "error"); genBtn.disabled = false; genBtn.textContent = "코드 생성"; return; }
+    codeArea.value = result.code;
+    countLabel.textContent = `${result.count}개 번호가 포함되었습니다.`;
+    step1.classList.add("hidden");
+    step2.classList.remove("hidden");
+  };
+
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(codeArea.value).then(() => {
+      showToast("코드가 클립보드에 복사되었습니다.", "success");
+      copyBtn.textContent = "복사 완료!";
+      setTimeout(() => { copyBtn.textContent = "코드 복사"; }, 1500);
+    });
+  };
+
+  closeBtn.onclick = () => modal.classList.add("hidden");
+  modal.onclick = (e) => { if (e.target === modal) modal.classList.add("hidden"); };
+}
+
+function showImportModal() {
+  const modal = document.getElementById("import-modal");
+  const codeArea = document.getElementById("import-code");
+  const submitBtn = document.getElementById("import-submit-btn");
+  const closeBtn = document.getElementById("import-close-btn");
+
+  codeArea.value = "";
+  submitBtn.disabled = false;
+  submitBtn.textContent = "가져오기";
+  modal.classList.remove("hidden");
+
+  submitBtn.onclick = async () => {
+    const code = codeArea.value.trim();
+    if (!code) { showToast("코드를 입력해주세요.", "error"); return; }
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span>가져오는 중...';
+    const result = await window.api.myNumbersImport(code);
+    submitBtn.disabled = false;
+    submitBtn.textContent = "가져오기";
+    if (result.error) { showToast(result.error, "error"); return; }
+    showToast(`${result.imported}개 번호를 가져왔습니다.${result.skipped > 0 ? ` (중복 ${result.skipped}개 건너뜀)` : ""}`, "success");
+    modal.classList.add("hidden");
+    await loadAndRenderMyNumbers("lotto");
+    await loadAndRenderMyNumbers("pension");
+  };
+
+  closeBtn.onclick = () => modal.classList.add("hidden");
+  modal.onclick = (e) => { if (e.target === modal) modal.classList.add("hidden"); };
 }

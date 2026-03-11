@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { Worker } = require("worker_threads");
 const { app, dialog } = require("electron");
-const { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, getRecentRecords, EMBEDDED_DATA } = require("./analyzer");
+const { getRecords, LottoStats, getRecommendations, getTop5, getNeverDrawn, getRecentRecords, EMBEDDED_DATA, getAlgoNames } = require("./analyzer");
 const EMBEDDED_PRIZE = require("./prize_data");
 
 let stats = null;
@@ -103,13 +103,17 @@ function setupIpc(ipcMain, getWindow) {
     }
   });
 
-  ipcMain.handle("get-recommendations", async (_event, count) => {
+  ipcMain.handle("get-recommendations", async (_event, count, selectedAlgos) => {
     if (!stats) return { error: "데이터가 로드되지 않았습니다." };
     try {
-      return { recommendations: getRecommendations(stats, count || 1) };
+      return { recommendations: getRecommendations(stats, count || 1, selectedAlgos || null) };
     } catch (e) {
       return { error: `추천 생성 실패: ${e.message}` };
     }
+  });
+
+  ipcMain.handle("get-algo-names", async () => {
+    return { lotto: getAlgoNames() };
   });
 
   ipcMain.handle("get-top5", async () => {
@@ -276,7 +280,7 @@ function setupIpc(ipcMain, getWindow) {
 
   // ── 백테스트 ──
 
-  function startBacktest(getWindow) {
+  function startBacktest(getWindow, gamesCount = 100) {
     const workerPath = path.join(__dirname, "backtest_worker.js");
     const sendToRenderer = (channel, data) => {
       const win = getWindow();
@@ -284,13 +288,13 @@ function setupIpc(ipcMain, getWindow) {
     };
 
     // 로또 Worker
-    const lottoWorker = new Worker(workerPath, { workerData: { type: "lotto" } });
+    const lottoWorker = new Worker(workerPath, { workerData: { type: "lotto", gamesCount } });
     lottoWorker.on("message", (msg) => {
       if (msg.event === "progress") {
         sendToRenderer("backtest-progress", { type: "lotto", pct: msg.pct });
       } else if (msg.event === "done") {
         cachedLottoBacktest = msg.results;
-        sendToRenderer("backtest-done", { type: "lotto", results: msg.results });
+        sendToRenderer("backtest-done", { type: "lotto", results: msg.results, gamesCount: msg.gamesCount });
       }
     });
     lottoWorker.on("error", (err) => {
@@ -299,13 +303,13 @@ function setupIpc(ipcMain, getWindow) {
     });
 
     // 연금복권 Worker (병렬)
-    const pensionWorker = new Worker(workerPath, { workerData: { type: "pension" } });
+    const pensionWorker = new Worker(workerPath, { workerData: { type: "pension", gamesCount } });
     pensionWorker.on("message", (msg) => {
       if (msg.event === "progress") {
         sendToRenderer("backtest-progress", { type: "pension", pct: msg.pct });
       } else if (msg.event === "done") {
         cachedPensionBacktest = msg.results;
-        sendToRenderer("backtest-done", { type: "pension", results: msg.results });
+        sendToRenderer("backtest-done", { type: "pension", results: msg.results, gamesCount: msg.gamesCount });
       }
     });
     pensionWorker.on("error", (err) => {
@@ -322,10 +326,10 @@ function setupIpc(ipcMain, getWindow) {
     return { results: cachedPensionBacktest };
   });
 
-  ipcMain.handle("start-backtest", async () => {
+  ipcMain.handle("start-backtest", async (_event, gamesCount) => {
     cachedLottoBacktest = null;
     cachedPensionBacktest = null;
-    startBacktest(getWindow);
+    startBacktest(getWindow, gamesCount || 100);
     return { started: true };
   });
 

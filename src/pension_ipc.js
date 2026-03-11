@@ -6,6 +6,7 @@ const {
   getPensionRecommendations, getPensionTop5,
   getRecentRecords,
   EMBEDDED_DATA,
+  getPensionAlgoNames,
 } = require("./pension_analyzer");
 
 let stats = null;
@@ -55,13 +56,17 @@ function setupPensionIpc(ipcMain, getWindow) {
     }
   });
 
-  ipcMain.handle("pension-get-recommendations", async (_event, count) => {
+  ipcMain.handle("pension-get-recommendations", async (_event, count, selectedAlgos) => {
     if (!stats) return { error: "연금복권 데이터가 로드되지 않았습니다." };
     try {
-      return { recommendations: getPensionRecommendations(stats, count || 1) };
+      return { recommendations: getPensionRecommendations(stats, count || 1, selectedAlgos || null) };
     } catch (e) {
       return { error: `추천 생성 실패: ${e.message}` };
     }
+  });
+
+  ipcMain.handle("pension-get-algo-names", async () => {
+    return { pension: getPensionAlgoNames() };
   });
 
   ipcMain.handle("pension-get-history", async (_event, count) => {

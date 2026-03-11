@@ -26,10 +26,13 @@ export function initSettings() {
     window.api.toggleDevTools();
   });
 
-  // ── 튜토리얼 리셋 ──
-  document.getElementById("settings-reset-tutorial").addEventListener("click", () => {
-    localStorage.removeItem("tutorial-done");
-    showToast("다음 앱 시작 시 튜토리얼이 표시됩니다.", "success");
+  // ── 백테스트 게임 수 설정 ──
+  const btSelect = document.getElementById("settings-backtest-games");
+  const savedBt = localStorage.getItem("backtest-games") || "100";
+  btSelect.value = savedBt;
+  btSelect.addEventListener("change", () => {
+    localStorage.setItem("backtest-games", btSelect.value);
+    showToast("백테스트 설정이 변경되었습니다. 다음 시작 시 적용됩니다.", "success");
   });
 
   // ── 모든 설정 초기화 ──

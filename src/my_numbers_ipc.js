@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const { app, dialog } = require("electron");
 const { EMBEDDED_DATA: LOTTO_EMBEDDED } = require("./analyzer");
 const { EMBEDDED_DATA: PENSION_EMBEDDED } = require("./pension_analyzer");
@@ -219,39 +220,48 @@ function setupMyNumbersIpc(ipcMain) {
     }
   });
 
-  // 내 번호 내보내기
+  // ── 암호화 유틸 ──
+  const CIPHER_KEY = crypto.createHash("sha256").update("lotto-recommender-v1").digest();
+
+  function encryptData(data) {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv("aes-256-cbc", CIPHER_KEY, iv);
+    let encrypted = cipher.update(JSON.stringify(data), "utf8");
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    return "LOTTO:" + Buffer.concat([iv, encrypted]).toString("base64");
+  }
+
+  function decryptData(code) {
+    if (!code.startsWith("LOTTO:")) throw new Error("유효하지 않은 코드 형식입니다.");
+    const buf = Buffer.from(code.slice(6), "base64");
+    const iv = buf.slice(0, 16);
+    const encrypted = buf.slice(16);
+    const decipher = crypto.createDecipheriv("aes-256-cbc", CIPHER_KEY, iv);
+    let decrypted = decipher.update(encrypted);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return JSON.parse(decrypted.toString("utf8"));
+  }
+
+  // 내 번호 내보내기 (암호화 코드)
   ipcMain.handle("my-numbers-export", async () => {
     try {
       const data = loadMyNumbers();
       if (data.length === 0) return { error: "내보낼 데이터가 없습니다." };
 
-      const result = await dialog.showSaveDialog({
-        title: "내 번호 내보내기",
-        defaultPath: `my_numbers_${new Date().toISOString().split("T")[0]}.json`,
-        filters: [{ name: "JSON", extensions: ["json"] }],
-      });
-      if (result.canceled) return { canceled: true };
-
       const exportData = { version: 1, exportedAt: new Date().toISOString(), entries: data };
-      fs.writeFileSync(result.filePath, JSON.stringify(exportData, null, 2), "utf-8");
-      return { success: true, count: data.length };
+      const code = encryptData(exportData);
+      return { success: true, code, count: data.length };
     } catch (e) {
       return { error: `내보내기 실패: ${e.message}` };
     }
   });
 
-  // 내 번호 가져오기
-  ipcMain.handle("my-numbers-import", async () => {
+  // 내 번호 가져오기 (암호화 코드)
+  ipcMain.handle("my-numbers-import", async (_event, code) => {
     try {
-      const result = await dialog.showOpenDialog({
-        title: "내 번호 가져오기",
-        filters: [{ name: "JSON", extensions: ["json"] }],
-        properties: ["openFile"],
-      });
-      if (result.canceled) return { canceled: true };
+      if (!code || typeof code !== "string") return { error: "코드를 입력해주세요." };
 
-      const raw = fs.readFileSync(result.filePaths[0], "utf-8");
-      const imported = JSON.parse(raw);
+      const imported = decryptData(code.trim());
       const entries = Array.isArray(imported) ? imported : (imported.entries || []);
 
       const valid = entries.filter(e =>
@@ -267,6 +277,9 @@ function setupMyNumbersIpc(ipcMain) {
       saveMyNumbers([...existing, ...newEntries]);
       return { success: true, imported: newEntries.length, skipped: valid.length - newEntries.length };
     } catch (e) {
+      if (e.message.includes("bad decrypt") || e.message.includes("wrong final block")) {
+        return { error: "유효하지 않은 코드입니다. 코드를 다시 확인해주세요." };
+      }
       return { error: `가져오기 실패: ${e.message}` };
     }
   });

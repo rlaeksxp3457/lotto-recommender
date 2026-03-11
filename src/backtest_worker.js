@@ -6,17 +6,18 @@
 const { parentPort, workerData } = require("worker_threads");
 
 const type = workerData.type; // "lotto" | "pension"
+const gamesCount = workerData.gamesCount || 100;
 
 if (type === "lotto") {
   const { runBacktest } = require("./analyzer");
   const results = runBacktest((pct) => {
     parentPort.postMessage({ event: "progress", type: "lotto", pct });
-  });
-  parentPort.postMessage({ event: "done", type: "lotto", results });
+  }, gamesCount);
+  parentPort.postMessage({ event: "done", type: "lotto", results, gamesCount });
 } else if (type === "pension") {
   const { runPensionBacktest } = require("./pension_analyzer");
   const results = runPensionBacktest((pct) => {
     parentPort.postMessage({ event: "progress", type: "pension", pct });
-  });
-  parentPort.postMessage({ event: "done", type: "pension", results });
+  }, gamesCount);
+  parentPort.postMessage({ event: "done", type: "pension", results, gamesCount });
 }

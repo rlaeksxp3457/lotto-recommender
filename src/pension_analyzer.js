@@ -543,9 +543,14 @@ const STRATEGIES = [
     ] },
 ];
 
-function getPensionRecommendations(stats, count = 1) {
+function getPensionAlgoNames() {
+  return STRATEGIES.map((s, i) => ({ index: i, name: s.name, desc: s.desc }));
+}
+
+function getPensionRecommendations(stats, count = 1, selectedAlgos = null) {
   const results = [];
-  for (const { name, desc, fn, howItWorks } of STRATEGIES) {
+  STRATEGIES.forEach(({ name, desc, fn, howItWorks }, idx) => {
+    if (selectedAlgos && !selectedAlgos.includes(idx)) return;
     for (let i = 0; i < count; i++) {
       const { group, digits } = fn(stats);
       const oddCount = digits.filter(d => d % 2 === 1).length;
@@ -559,7 +564,7 @@ function getPensionRecommendations(stats, count = 1) {
         setIndex: i,
       });
     }
-  }
+  });
   return results;
 }
 
@@ -674,56 +679,50 @@ PensionStats.prototype.getAdvancedAnalysis = function (recentN = 20) {
 
 // ─── 백테스트 ───
 
-const TEST_WINDOW = 100;
-const SETS_PER_DRAW = 20;
-
-function runPensionBacktest(onProgress) {
+function runPensionBacktest(onProgress, gamesCount = 100) {
   const records = getRecords();
   const total = records.length;
-  const testStart = Math.max(0, total - TEST_WINDOW);
-  const testCount = total - testStart;
+  if (total < 31) return [];
 
-  // 이론적 확률: 각 위치 독립 1/10 → 6자리 위치별 일치 기대값 = 6 * 0.1 = 0.6
-  const theoAvgMatch = 0.6;
-  // 1자리 이상 일치 이론 확률: 1 - (0.9)^6 ≈ 0.4686
   const theoOver1 = 1 - Math.pow(0.9, 6);
+
+  // 최신 1회차만 테스트
+  const testIdx = total - 1;
+  const trainingRecords = records.slice(0, testIdx);
+  const testStats = new PensionStats(trainingRecords);
+  const actual = records[testIdx];
 
   const results = STRATEGIES.map(s => ({
     name: s.name,
-    posMatchCounts: 0,   // 총 위치 일치 수
-    over1Count: 0,       // 1자리 이상 일치 세트 수
+    posMatchCounts: 0,
+    over1Count: 0,
     totalSets: 0,
+    posMatchDist: [0, 0, 0, 0, 0, 0, 0],
   }));
 
-  for (let i = testStart; i < total; i++) {
-    const trainingRecords = records.slice(0, i);
-    if (trainingRecords.length < 30) continue;
-    const testStats = new PensionStats(trainingRecords);
-    const actual = records[i];
+  for (let s = 0; s < STRATEGIES.length; s++) {
+    for (let j = 0; j < gamesCount; j++) {
+      const { group, digits } = STRATEGIES[s].fn(testStats);
+      let posMatches = 0;
+      for (let p = 0; p < 6; p++) {
+        if (digits[p] === actual.digits[p]) posMatches++;
+      }
+      results[s].posMatchCounts += posMatches;
+      results[s].posMatchDist[posMatches]++;
+      if (posMatches >= 1) results[s].over1Count++;
+      results[s].totalSets++;
 
-    for (let s = 0; s < STRATEGIES.length; s++) {
-      for (let j = 0; j < SETS_PER_DRAW; j++) {
-        const { group, digits } = STRATEGIES[s].fn(testStats);
-        // 위치별 일치 수 (조 제외, 6자리만)
-        let posMatches = 0;
-        for (let p = 0; p < 6; p++) {
-          if (digits[p] === actual.digits[p]) posMatches++;
-        }
-        results[s].posMatchCounts += posMatches;
-        if (posMatches >= 1) results[s].over1Count++;
-        results[s].totalSets++;
+      if (onProgress && j % 10 === 0) {
+        const pct = Math.round(((s * gamesCount + j) / (STRATEGIES.length * gamesCount)) * 100);
+        onProgress(pct);
       }
     }
-
-    if (onProgress) {
-      const pct = Math.round(((i - testStart + 1) / testCount) * 100);
-      onProgress(pct);
-    }
   }
+  if (onProgress) onProgress(100);
 
   return results.map(r => {
     const total = r.totalSets;
-    if (total === 0) return { name: r.name, avgMatches: 0, over1Rate: 0, vsTheory: "0" };
+    if (total === 0) return { name: r.name, avgMatches: 0, over1Rate: 0, vsTheory: "0", matchCounts: [0,0,0,0,0,0,0], totalSets: 0 };
     const avg = r.posMatchCounts / total;
     const over1Rate = r.over1Count / total;
     const vs = theoOver1 > 0 ? ((over1Rate / theoOver1 - 1) * 100).toFixed(1) : "0";
@@ -732,6 +731,8 @@ function runPensionBacktest(onProgress) {
       avgMatches: parseFloat(avg.toFixed(4)),
       over1Rate: parseFloat((over1Rate * 100).toFixed(4)),
       vsTheory: (over1Rate >= theoOver1 ? "+" : "") + vs,
+      matchCounts: [...r.posMatchDist],
+      totalSets: r.totalSets,
     };
   }).sort((a, b) => b.over1Rate - a.over1Rate);
 }
@@ -744,4 +745,5 @@ module.exports = {
   getRecentRecords,
   EMBEDDED_DATA,
   runPensionBacktest,
+  getPensionAlgoNames,
 };
