@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로또 추천기 - 데이터로 분석하는 행운</title>
+  <meta name="description" content="통계 기반 알고리즘과 백테스트로 검증된 로또 6/45, 연금복권720+ 번호 추천 프로그램. 무료 & 오픈소스.">
+  <meta property="og:title" content="로또 추천기 v3.1.0">
+  <meta property="og:description" content="통계 기반 알고리즘 + 백테스트로 검증된 번호 추천">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎱</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --accent: #5865f2;
+      --accent-dark: #4752c4;
+      --green: #23a559;
+      --text-primary: #f5f5f7;
+      --text-secondary: #86868b;
+      --text-tertiary: #6e6e73;
+      --bg-black: #000000;
+      --bg-section: #0a0a0a;
+      --bg-card: #1d1d1f;
+      --border: rgba(255,255,255,0.08);
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+      scrollbar-color: #333 transparent;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', -apple-system, 'SF Pro Display', 'Segoe UI', sans-serif;
+      background: var(--bg-black);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* ═══════════════════════════════════
+       Navigation
+    ═══════════════════════════════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.3s;
+    }
+    .nav-inner {
+      width: 100%; max-width: 1024px; padding: 0 22px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 8px;
+      text-decoration: none; color: var(--text-primary);
+      font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+    }
+    .nav-logo svg { width: 28px; height: 28px; border-radius: 6px; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a {
+      color: var(--text-secondary); text-decoration: none;
+      font-size: 12px; font-weight: 400; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+    .nav-download {
+      background: var(--accent); color: #fff !important; font-weight: 500 !important;
+      padding: 4px 14px; border-radius: 16px; font-size: 12px !important;
+    }
+    .nav-download:hover { background: var(--accent-dark); }
+
+    /* ═══════════════════════════════════
+       Hero – Full Viewport Cinematic
+    ═══════════════════════════════════ */
+    .hero {
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 120px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+
+    /* Background glow */
+    .hero-glow {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 900px; height: 900px;
+      background: radial-gradient(circle, rgba(88,101,242,0.12) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(88,101,242,0.12); border: 1px solid rgba(88,101,242,0.25);
+      color: #8b96f7; font-size: 13px; font-weight: 500;
+      padding: 6px 16px; border-radius: 20px; margin-bottom: 24px;
+      position: relative; opacity: 0; transform: translateY(20px);
+    }
+    .hero-chip .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green); animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .hero h1 {
+      font-size: clamp(42px, 8vw, 80px); font-weight: 900;
+      line-height: 1.08; letter-spacing: -0.04em;
+      color: var(--text-primary); position: relative;
+      opacity: 0; transform: translateY(30px);
+      margin-bottom: 20px;
+    }
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, #5865f2 0%, #8b96f7 50%, #b4bcff 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(16px, 2.5vw, 21px); font-weight: 300;
+      color: var(--text-secondary); line-height: 1.6;
+      max-width: 500px; margin: 0 auto 48px;
+      position: relative; opacity: 0; transform: translateY(30px);
+    }
+
+    /* Floating Balls */
+    .hero-balls-container {
+      position: relative; width: 420px; height: 100px;
+      margin: 0 auto 56px;
+      opacity: 0; transform: translateY(30px);
+    }
+    .hero-ball {
+      position: absolute; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; color: #fff;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4),
+                  inset 0 -4px 8px rgba(0,0,0,0.2),
+                  inset 0 4px 8px rgba(255,255,255,0.15);
+    }
+    .hero-ball::after {
+      content: ''; position: absolute; top: 15%; left: 25%;
+      width: 35%; height: 25%; border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(255,255,255,0.5), transparent);
+    }
+    .hb1 { width: 62px; height: 62px; font-size: 22px; background: linear-gradient(145deg, #fdd835, #f9a825); color: #333; left: 0; top: 18px; animation: float1 4s ease-in-out infinite; }
+    .hb2 { width: 58px; height: 58px; font-size: 20px; background: linear-gradient(145deg, #64b5f6, #1565c0); left: 68px; top: 6px; animation: float2 4.5s ease-in-out infinite; }
+    .hb3 { width: 66px; height: 66px; font-size: 22px; background: linear-gradient(145deg, #64b5f6, #1565c0); left: 138px; top: 22px; animation: float3 3.8s ease-in-out infinite; }
+    .hb4 { width: 60px; height: 60px; font-size: 20px; background: linear-gradient(145deg, #ef5350, #b71c1c); left: 216px; top: 10px; animation: float1 4.2s ease-in-out infinite 0.3s; }
+    .hb5 { width: 56px; height: 56px; font-size: 20px; background: linear-gradient(145deg, #ef5350, #b71c1c); left: 286px; top: 26px; animation: float2 3.6s ease-in-out infinite 0.5s; }
+    .hb6 { width: 64px; height: 64px; font-size: 22px; background: linear-gradient(145deg, #aed581, #33691e); left: 354px; top: 14px; animation: float3 4.4s ease-in-out infinite 0.2s; }
+    .hb-plus { position: absolute; left: 282px; top: 0; font-size: 20px; color: var(--text-tertiary); font-weight: 300; display: none; }
+
+    @keyframes float1 { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-14px) rotate(3deg); } }
+    @keyframes float2 { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-18px) rotate(-3deg); } }
+    @keyframes float3 { 0%,100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+
+    .hero-cta {
+      display: flex; gap: 14px; justify-content: center;
+      position: relative; opacity: 0; transform: translateY(30px);
+    }
+    .btn-hero {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 16px 32px; border-radius: 980px; font-size: 17px;
+      font-weight: 600; text-decoration: none; border: none; cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-hero-primary {
+      background: var(--accent); color: #fff;
+      box-shadow: 0 4px 24px rgba(88,101,242,0.4);
+    }
+    .btn-hero-primary:hover { background: #6d77f5; transform: scale(1.04); box-shadow: 0 6px 32px rgba(88,101,242,0.5); }
+    .btn-hero-secondary {
+      background: transparent; color: var(--accent);
+      border: 1.5px solid rgba(88,101,242,0.4);
+    }
+    .btn-hero-secondary:hover { border-color: var(--accent); background: rgba(88,101,242,0.06); transform: scale(1.04); }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: absolute; bottom: 32px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: var(--text-tertiary); font-size: 11px; font-weight: 400;
+      animation: scrollBounce 2s infinite;
+    }
+    .scroll-indicator svg { opacity: 0.4; }
+    @keyframes scrollBounce { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(8px); } }
+
+    /* ═══════════════════════════════════
+       Scroll Reveal System
+    ═══════════════════════════════════ */
+    .reveal {
+      opacity: 0; transform: translateY(60px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+    .reveal-delay-5 { transition-delay: 0.5s; }
+
+    .reveal-scale {
+      opacity: 0; transform: scale(0.92);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-scale.visible { opacity: 1; transform: scale(1); }
+
+    .reveal-left {
+      opacity: 0; transform: translateX(-60px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-left.visible { opacity: 1; transform: translateX(0); }
+
+    .reveal-right {
+      opacity: 0; transform: translateX(60px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-right.visible { opacity: 1; transform: translateX(0); }
+
+    /* ═══════════════════════════════════
+       Section: Stats Ticker
+    ═══════════════════════════════════ */
+    .stats-section {
+      padding: 80px 24px; background: var(--bg-section);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stats-grid {
+      max-width: 900px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px;
+      text-align: center;
+    }
+    .stat-item .stat-number {
+      font-size: clamp(36px, 6vw, 56px); font-weight: 900;
+      background: linear-gradient(135deg, var(--accent), #b4bcff);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+    }
+    .stat-item .stat-label {
+      font-size: 14px; color: var(--text-tertiary); font-weight: 400; margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════
+       Section: Feature Showcase (Apple-style alternating)
+    ═══════════════════════════════════ */
+    .feature-section {
+      padding: 120px 24px; position: relative;
+      overflow: hidden;
+    }
+    .feature-section:nth-child(odd) { background: var(--bg-black); }
+    .feature-section:nth-child(even) { background: var(--bg-section); }
+
+    .feature-inner {
+      max-width: 980px; margin: 0 auto;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 60px;
+      align-items: center;
+    }
+    .feature-inner.reverse { direction: rtl; }
+    .feature-inner.reverse > * { direction: ltr; }
+
+    .feature-text { }
+    .feature-tag {
+      display: inline-block; font-size: 13px; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em;
+      margin-bottom: 16px;
+    }
+    .feature-text h2 {
+      font-size: clamp(28px, 4vw, 44px); font-weight: 800;
+      line-height: 1.15; letter-spacing: -0.03em;
+      color: var(--text-primary); margin-bottom: 20px;
+    }
+    .feature-text p {
+      font-size: 16px; font-weight: 300; color: var(--text-secondary);
+      line-height: 1.7; margin-bottom: 16px;
+    }
+    .feature-list {
+      list-style: none; padding: 0;
+    }
+    .feature-list li {
+      font-size: 15px; color: var(--text-secondary); font-weight: 400;
+      padding: 8px 0; padding-left: 24px; position: relative;
+    }
+    .feature-list li::before {
+      content: ''; position: absolute; left: 0; top: 16px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* Visual Card (replaces screenshots) */
+    .feature-visual {
+      position: relative; border-radius: 20px; overflow: hidden;
+      background: var(--bg-card); border: 1px solid var(--border);
+      min-height: 380px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    /* Algorithm visualization */
+    .algo-viz {
+      width: 100%; height: 100%; padding: 36px 40px;
+      display: flex; flex-direction: column; gap: 14px;
+      justify-content: center;
+    }
+    .algo-bar-group { display: flex; flex-direction: column; gap: 6px; }
+    .algo-bar-label { font-size: 12px; color: var(--text-tertiary); font-weight: 500; }
+    .algo-bar {
+      height: 32px; border-radius: 6px; position: relative;
+      background: rgba(88,101,242,0.08); overflow: hidden;
+    }
+    .algo-bar-fill {
+      height: 100%; border-radius: 6px;
+      background: linear-gradient(90deg, var(--accent), #8b96f7);
+      width: 0%; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex; align-items: center; padding-left: 10px;
+      font-size: 11px; font-weight: 600; color: #fff;
+    }
+    .algo-bar-fill.animated { /* set by JS */ }
+
+    /* Backtest visualization */
+    .backtest-viz {
+      width: 100%; height: 100%; padding: 36px 40px;
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .bt-header {
+      font-size: 11px; color: var(--text-tertiary); font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px;
+    }
+    .bt-chart {
+      display: flex; align-items: flex-end; gap: 6px; height: 140px;
+      padding-bottom: 20px; border-bottom: 1px solid var(--border);
+    }
+    .bt-bar {
+      flex: 1; border-radius: 4px 4px 0 0; min-height: 4px;
+      transition: height 1s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .bt-bar::after {
+      content: attr(data-val); position: absolute; top: -18px; left: 50%;
+      transform: translateX(-50%); font-size: 9px; color: var(--text-tertiary);
+      white-space: nowrap; font-weight: 500; opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .bt-bar:hover::after { opacity: 1; }
+    .bt-bar.green { background: linear-gradient(180deg, #4ade80, #16a34a); }
+    .bt-bar.blue { background: linear-gradient(180deg, #60a5fa, #2563eb); }
+    .bt-bar.purple { background: linear-gradient(180deg, #a78bfa, #7c3aed); }
+    .bt-bar.amber { background: linear-gradient(180deg, #fbbf24, #d97706); }
+    .bt-bar.pink { background: linear-gradient(180deg, #f472b6, #db2777); }
+    .bt-bar.cyan { background: linear-gradient(180deg, #22d3ee, #0891b2); }
+    .bt-bar.red { background: linear-gradient(180deg, #f87171, #dc2626); }
+    .bt-bar.lime { background: linear-gradient(180deg, #a3e635, #65a30d); }
+    .bt-legend {
+      display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px;
+    }
+    .bt-legend span {
+      font-size: 10px; color: var(--text-tertiary); font-weight: 400;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .bt-legend span::before {
+      content: ''; width: 8px; height: 8px; border-radius: 2px;
+    }
+
+    /* Analysis visualization */
+    .analysis-viz {
+      width: 100%; height: 100%; padding: 36px 40px;
+      display: flex; flex-direction: column; gap: 14px;
+      justify-content: center;
+    }
+    .az-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .az-label {
+      width: 60px; font-size: 11px; color: var(--text-tertiary);
+      font-weight: 500; text-align: right; flex-shrink: 0;
+    }
+    .az-dots {
+      display: flex; gap: 4px; flex-wrap: wrap;
+    }
+    .az-dot {
+      width: 22px; height: 22px; border-radius: 4px;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0; transform: scale(0);
+    }
+    .az-dot.visible { opacity: 1; transform: scale(1); }
+
+    /* Ticket design visualization */
+    .ticket-viz {
+      width: 100%; height: 100%; padding: 36px 40px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 12px;
+    }
+    .ticket-card {
+      width: 90%; max-width: 280px; background: #fff; border-radius: 12px;
+      padding: 20px; position: relative; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+      opacity: 0; transform: translateY(20px) rotateX(10deg);
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .ticket-card.visible { opacity: 1; transform: translateY(0) rotateX(0); }
+    .ticket-card-header {
+      font-size: 10px; font-weight: 700; color: #5865f2;
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;
+    }
+    .ticket-balls {
+      display: flex; gap: 6px; justify-content: center; margin-bottom: 8px;
+    }
+    .ticket-ball {
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: #fff;
+    }
+    .ticket-footer { font-size: 9px; color: #999; text-align: center; }
+    .ticket-perforation {
+      position: absolute; left: 0; right: 0; height: 1px;
+      border-top: 2px dashed #e0e0e0;
+    }
+
+    /* Manage numbers visualization */
+    .manage-viz {
+      width: 100%; height: 100%; padding: 36px 40px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px;
+    }
+    .manage-item {
+      width: 85%; background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; display: flex; align-items: center;
+      gap: 12px; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0; transform: translateX(-30px);
+      cursor: grab;
+    }
+    .manage-item.visible { opacity: 1; transform: translateX(0); }
+    .manage-item:hover { background: rgba(88,101,242,0.06); border-color: rgba(88,101,242,0.3); }
+    .manage-grip { color: var(--text-tertiary); font-size: 14px; }
+    .manage-balls { display: flex; gap: 4px; flex: 1; }
+    .manage-ball {
+      width: 26px; height: 26px; border-radius: 50%;
+      font-size: 10px; font-weight: 700; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .manage-round { font-size: 11px; color: var(--text-tertiary); }
+    .manage-badge {
+      font-size: 9px; font-weight: 600; padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .badge-win { background: rgba(35,165,89,0.15); color: #4ade80; }
+    .badge-none { background: rgba(255,255,255,0.06); color: var(--text-tertiary); }
+
+    /* ═══════════════════════════════════
+       Section: Full-width Feature Headline
+    ═══════════════════════════════════ */
+    .headline-section {
+      padding: 160px 24px; text-align: center;
+      position: relative; overflow: hidden;
+      background: var(--bg-black);
+    }
+    .headline-section::before {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(88,101,242,0.06) 0%, transparent 60%);
+    }
+    .headline-section h2 {
+      font-size: clamp(32px, 6vw, 64px); font-weight: 900;
+      line-height: 1.12; letter-spacing: -0.04em;
+      color: var(--text-primary); max-width: 800px; margin: 0 auto 24px;
+    }
+    .headline-section p {
+      font-size: clamp(16px, 2vw, 20px); font-weight: 300;
+      color: var(--text-secondary); max-width: 540px; margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ═══════════════════════════════════
+       Section: Version Timeline
+    ═══════════════════════════════════ */
+    .version-section {
+      padding: 120px 24px; background: var(--bg-section);
+      border-top: 1px solid var(--border);
+    }
+    .version-inner { max-width: 640px; margin: 0 auto; }
+    .version-header {
+      text-align: center; margin-bottom: 64px;
+    }
+    .version-header h2 {
+      font-size: clamp(28px, 4vw, 44px); font-weight: 800;
+      letter-spacing: -0.03em; color: var(--text-primary); margin-bottom: 12px;
+    }
+    .version-header p {
+      font-size: 16px; font-weight: 300; color: var(--text-secondary);
+    }
+
+    /* Latest release card */
+    .latest-release {
+      background: var(--bg-card); border: 1px solid rgba(88,101,242,0.3);
+      border-radius: 16px; padding: 36px; margin-bottom: 48px;
+      position: relative; overflow: hidden;
+    }
+    .latest-release::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), #b4bcff, var(--accent));
+    }
+    .lr-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .lr-badge {
+      font-size: 10px; font-weight: 700; background: var(--green); color: #fff;
+      padding: 3px 10px; border-radius: 4px; text-transform: uppercase;
+    }
+    .lr-version { font-size: 28px; font-weight: 900; color: var(--accent); }
+    .lr-date { font-size: 13px; color: var(--text-tertiary); }
+    .lr-changes { display: flex; flex-direction: column; gap: 6px; }
+    .lr-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: rgba(255,255,255,0.03); border-radius: 10px;
+      padding: 12px 14px; font-size: 14px; color: var(--text-primary);
+      font-weight: 400;
+    }
+    .lr-tag {
+      flex-shrink: 0; font-size: 10px; font-weight: 700;
+      padding: 2px 8px; border-radius: 4px; margin-top: 2px;
+    }
+    .lr-tag-new { background: rgba(35,165,89,0.12); color: #4ade80; }
+    .lr-tag-ui { background: rgba(251,191,36,0.12); color: #fbbf24; }
+    .lr-tag-imp { background: rgba(88,101,242,0.12); color: #8b96f7; }
+
+    /* Changelog timeline */
+    .timeline { position: relative; }
+    .timeline::before {
+      content: ''; position: absolute; left: 12px; top: 0; bottom: 0;
+      width: 1px; background: var(--border);
+    }
+    .timeline-entry {
+      padding-left: 40px; padding-bottom: 32px; position: relative;
+    }
+    .timeline-entry::before {
+      content: ''; position: absolute; left: 8px; top: 6px;
+      width: 9px; height: 9px; border-radius: 50%;
+      background: var(--bg-card); border: 2px solid var(--text-tertiary);
+    }
+    .timeline-entry:first-child::before { border-color: var(--accent); background: var(--accent); }
+    .tl-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;
+    }
+    .tl-ver { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .tl-badge {
+      font-size: 9px; font-weight: 700; padding: 1px 6px;
+      border-radius: 3px; text-transform: uppercase;
+    }
+    .tl-major { background: rgba(239,68,68,0.12); color: #f87171; }
+    .tl-minor { background: rgba(88,101,242,0.12); color: #8b96f7; }
+    .tl-patch { background: rgba(255,255,255,0.06); color: var(--text-tertiary); }
+    .tl-date { font-size: 12px; color: var(--text-tertiary); }
+    .tl-changes { list-style: none; }
+    .tl-changes li {
+      font-size: 13px; color: var(--text-secondary); line-height: 1.9;
+      padding-left: 14px; position: relative;
+    }
+    .tl-changes li::before {
+      content: ''; position: absolute; left: 0; top: 10px;
+      width: 4px; height: 4px; border-radius: 50%; background: var(--text-tertiary);
+    }
+
+    /* ═══════════════════════════════════
+       CTA Section
+    ═══════════════════════════════════ */
+    .cta-section {
+      padding: 160px 24px; text-align: center;
+      position: relative; overflow: hidden; background: var(--bg-black);
+    }
+    .cta-section::before {
+      content: ''; position: absolute; top: 40%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 800px; height: 600px;
+      background: radial-gradient(ellipse, rgba(88,101,242,0.08) 0%, transparent 60%);
+    }
+    .cta-section h2 {
+      font-size: clamp(32px, 5vw, 52px); font-weight: 900;
+      letter-spacing: -0.03em; color: var(--text-primary);
+      margin-bottom: 16px; position: relative;
+    }
+    .cta-section p {
+      font-size: 17px; font-weight: 300; color: var(--text-secondary);
+      margin-bottom: 40px; position: relative;
+    }
+    .cta-section .hero-cta { position: relative; }
+
+    /* ═══════════════════════════════════
+       Footer
+    ═══════════════════════════════════ */
+    footer {
+      padding: 40px 24px; text-align: center;
+      border-top: 1px solid var(--border);
+      background: var(--bg-section);
+    }
+    .footer-inner { max-width: 800px; margin: 0 auto; }
+    .footer-links {
+      display: flex; justify-content: center; gap: 24px;
+      margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .footer-links a {
+      font-size: 12px; color: var(--text-secondary);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text-primary); }
+    .footer-copy { font-size: 12px; color: var(--text-tertiary); margin-bottom: 16px; }
+    .footer-badges {
+      display: flex; justify-content: center; gap: 6px; flex-wrap: wrap;
+    }
+    .footer-badge {
+      font-size: 11px; color: var(--text-tertiary);
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      padding: 3px 10px; border-radius: 4px;
+    }
+
+    /* ═══════════════════════════════════
+       Responsive
+    ═══════════════════════════════════ */
+    @media (max-width: 768px) {
+      .feature-section { padding: 60px 20px; }
+      .feature-inner { grid-template-columns: 1fr; gap: 24px; }
+      .feature-inner.reverse { direction: ltr; }
+      .feature-visual { min-height: 280px; }
+      .feature-text h2 { font-size: 28px; }
+      .stats-section { padding: 48px 20px; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 16px; }
+      .stat-item .stat-number { font-size: 32px; }
+      .stat-item .stat-label { font-size: 12px; }
+      .headline-section { padding: 80px 20px; }
+      .headline-section h2 { font-size: 28px; }
+      .headline-section p { font-size: 15px; }
+      .version-section { padding: 60px 20px; }
+      .version-header { margin-bottom: 36px; }
+      .cta-section { padding: 80px 20px; }
+      .nav-links { gap: 16px; }
+      .nav-links a:not(.nav-download) { display: none; }
+      .hero-balls-container { width: 320px; }
+      .hb1 { width: 48px; height: 48px; font-size: 17px; left: 0; }
+      .hb2 { width: 44px; height: 44px; font-size: 16px; left: 52px; }
+      .hb3 { width: 50px; height: 50px; font-size: 17px; left: 104px; }
+      .hb4 { width: 46px; height: 46px; font-size: 16px; left: 162px; }
+      .hb5 { width: 42px; height: 42px; font-size: 16px; left: 216px; }
+      .hb6 { width: 48px; height: 48px; font-size: 17px; left: 268px; }
+      .hero-cta { flex-direction: column; align-items: center; }
+      .btn-hero { width: 100%; max-width: 320px; justify-content: center; }
+      .algo-viz, .backtest-viz, .analysis-viz, .ticket-viz, .manage-viz { padding: 24px 20px; }
+      .algo-bar { height: 26px; }
+      .algo-bar-group { gap: 3px; }
+      .algo-viz { gap: 10px; }
+      .bt-chart { height: 120px; }
+      .manage-item { width: 95%; padding: 10px 12px; gap: 8px; }
+      .manage-ball { width: 22px; height: 22px; font-size: 9px; }
+      .manage-round { font-size: 10px; }
+      .ticket-card { max-width: 260px; padding: 16px; }
+      .ticket-ball { width: 28px; height: 28px; font-size: 12px; }
+      .lr-item { padding: 10px 12px; font-size: 13px; }
+      .lr-tag { font-size: 9px; padding: 2px 6px; }
+    }
+
+    @media (max-width: 480px) {
+      .hero { padding: 100px 16px 60px; }
+      .hero-balls-container { width: 260px; height: 80px; }
+      .hb1 { width: 38px; height: 38px; font-size: 14px; left: 0; }
+      .hb2 { width: 36px; height: 36px; font-size: 13px; left: 42px; }
+      .hb3 { width: 40px; height: 40px; font-size: 14px; left: 84px; }
+      .hb4 { width: 36px; height: 36px; font-size: 13px; left: 130px; }
+      .hb5 { width: 34px; height: 34px; font-size: 13px; left: 172px; }
+      .hb6 { width: 38px; height: 38px; font-size: 14px; left: 214px; }
+      .feature-section { padding: 48px 16px; }
+      .feature-inner { gap: 20px; }
+      .feature-text h2 { font-size: 24px; }
+      .feature-text p { font-size: 14px; }
+      .feature-list li { font-size: 13px; padding: 6px 0 6px 20px; }
+      .headline-section { padding: 60px 16px; }
+      .headline-section h2 { font-size: 24px; }
+      .stats-section { padding: 36px 16px; }
+      .version-section { padding: 48px 16px; }
+      .cta-section { padding: 60px 16px; }
+      .latest-release { padding: 20px 16px; }
+      .lr-version { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ Navigation ═══ -->
+  <nav>
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+          <defs>
+            <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#5865f2"/><stop offset="100%" stop-color="#4752c4"/></linearGradient>
+            <linearGradient id="b1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#fdd835"/><stop offset="100%" stop-color="#f9a825"/></linearGradient>
+            <linearGradient id="b2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#64b5f6"/><stop offset="100%" stop-color="#1976d2"/></linearGradient>
+            <linearGradient id="b3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ef5350"/><stop offset="100%" stop-color="#c62828"/></linearGradient>
+          </defs>
+          <rect width="256" height="256" rx="48" fill="url(#bg)"/>
+          <circle cx="88" cy="88" r="36" fill="url(#b1)"/><text x="88" y="97" text-anchor="middle" font-family="Arial" font-weight="800" font-size="30" fill="#333">6</text>
+          <circle cx="168" cy="88" r="36" fill="url(#b2)"/><text x="168" y="97" text-anchor="middle" font-family="Arial" font-weight="800" font-size="28" fill="#fff">45</text>
+          <circle cx="128" cy="168" r="36" fill="url(#b3)"/><text x="128" y="177" text-anchor="middle" font-family="Arial" font-weight="800" font-size="26" fill="#fff">L</text>
+        </svg>
+        로또 추천기
+      </a>
+      <div class="nav-links">
+        <a href="#features">기능</a>
+        <a href="#analysis">분석</a>
+        <a href="#updates">업데이트</a>
+        <a href="https://github.com/rlaeksxp3457/lotto-recommender" target="_blank">GitHub</a>
+        <a href="https://github.com/rlaeksxp3457/lotto-recommender/releases/latest" target="_blank" class="nav-download">다운로드</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ Hero ═══ -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+
+    <div class="hero-chip" id="hero-chip">
+      <span class="dot"></span> v3.1.0 업데이트 출시
+    </div>
+
+    <h1 id="hero-title">당신의 번호를<br><span class="gradient">데이터로 분석</span></h1>
+
+    <p class="hero-sub" id="hero-sub">
+      8가지 통계 알고리즘과 최대 300회 백테스트로<br>
+      검증된 로또 6/45 & 연금복권720+ 번호 추천
+    </p>
+
+    <div class="hero-balls-container" id="hero-balls">
+      <div class="hero-ball hb1">3</div>
+      <div class="hero-ball hb2">17</div>
+      <div class="hero-ball hb3">24</div>
+      <div class="hero-ball hb4">31</div>
+      <div class="hero-ball hb5">38</div>
+      <div class="hero-ball hb6">42</div>
+    </div>
+
+    <div class="hero-cta" id="hero-cta">
+      <a href="https://github.com/rlaeksxp3457/lotto-recommender/releases/latest" target="_blank" class="btn-hero btn-hero-primary">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14ZM7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"/></svg>
+        Windows 다운로드
+      </a>
+      <a href="https://github.com/rlaeksxp3457/lotto-recommender" target="_blank" class="btn-hero btn-hero-secondary">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+        GitHub
+      </a>
+    </div>
+
+    <div class="scroll-indicator">
+      <span>스크롤</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+    </div>
+  </section>
+
+  <!-- ═══ Stats ═══ -->
+  <section class="stats-section">
+    <div class="stats-grid">
+      <div class="stat-item reveal">
+        <div class="stat-number" data-count="8">0</div>
+        <div class="stat-label">추천 알고리즘</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-1">
+        <div class="stat-number" data-count="300">0</div>
+        <div class="stat-label">백테스트 회차</div>
+      </div>
+      <div class="stat-item reveal reveal-delay-2">
+        <div class="stat-number" data-count="14">0</div>
+        <div class="stat-label">페이지별 가이드</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Feature 1: 번호 추천 ═══ -->
+  <section class="feature-section" id="features">
+    <div class="feature-inner">
+      <div class="feature-text">
+        <span class="feature-tag reveal">번호 추천</span>
+        <h2 class="reveal reveal-delay-1">8가지 알고리즘이<br>당신의 번호를 찾습니다</h2>
+        <p class="reveal reveal-delay-2">빈도분석부터 후나츠 사카이까지.<br>각 알고리즘이 독립적으로 최적의 번호 조합을 추천하고, 필터 칩으로 원하는 알고리즘만 골라볼 수 있습니다.</p>
+        <ul class="feature-list reveal reveal-delay-3">
+          <li>빈도분석 / 궁합번호 / 핫·콜드 넘버</li>
+          <li>AC값 / 끝수분석 / 번호대 / 연번</li>
+          <li>후나츠 사카이 알고리즘</li>
+          <li>알고리즘별 필터 칩 선택</li>
+        </ul>
+      </div>
+      <div class="feature-visual reveal-scale" id="algo-visual">
+        <div class="algo-viz">
+          <div class="algo-bar-group">
+            <div class="algo-bar-label">빈도분석</div>
+            <div class="algo-bar"><div class="algo-bar-fill" data-width="87">87%</div></div>
+          </div>
+          <div class="algo-bar-group">
+            <div class="algo-bar-label">궁합번호</div>
+            <div class="algo-bar"><div class="algo-bar-fill" data-width="73">73%</div></div>
+          </div>
+          <div class="algo-bar-group">
+            <div class="algo-bar-label">핫·콜드</div>
+            <div class="algo-bar"><div class="algo-bar-fill" data-width="65">65%</div></div>
+          </div>
+          <div class="algo-bar-group">
+            <div class="algo-bar-label">AC값 기반</div>
+            <div class="algo-bar"><div class="algo-bar-fill" data-width="91">91%</div></div>
+          </div>
+          <div class="algo-bar-group">
+            <div class="algo-bar-label">끝수분석</div>
+            <div class="algo-bar"><div class="algo-bar-fill" data-width="59">59%</div></div>
+          </div>
+          <div class="algo-bar-group">
+            <div class="algo-bar-label">후나츠 사카이</div>
+            <div class="algo-bar"><div class="algo-bar-fill" data-width="78">78%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Feature 2: 백테스트 ═══ -->
+  <section class="feature-section">
+    <div class="feature-inner reverse">
+      <div class="feature-text">
+        <span class="feature-tag reveal">백테스트</span>
+        <h2 class="reveal reveal-delay-1">과거 데이터로<br>성능을 검증합니다</h2>
+        <p class="reveal reveal-delay-2">최대 300회 과거 추첨 데이터로 각 알고리즘의 적중률을 백테스트. Worker 병렬 실행으로 수초 내에 결과를 확인합니다.</p>
+        <ul class="feature-list reveal reveal-delay-3">
+          <li>50 / 100 / 200 / 300회 선택</li>
+          <li>알고리즘별 성능 순위 표시</li>
+          <li>카드별 백테스트 미니바</li>
+          <li>Web Worker 병렬 처리</li>
+        </ul>
+      </div>
+      <div class="feature-visual reveal-scale" id="backtest-visual">
+        <div class="backtest-viz">
+          <div class="bt-header">알고리즘 성능 비교 (300회 백테스트)</div>
+          <div class="bt-chart" id="bt-chart">
+            <div class="bt-bar green" data-val="87%" style="height: 0%"></div>
+            <div class="bt-bar blue" data-val="73%" style="height: 0%"></div>
+            <div class="bt-bar purple" data-val="65%" style="height: 0%"></div>
+            <div class="bt-bar amber" data-val="91%" style="height: 0%"></div>
+            <div class="bt-bar pink" data-val="59%" style="height: 0%"></div>
+            <div class="bt-bar cyan" data-val="78%" style="height: 0%"></div>
+            <div class="bt-bar red" data-val="68%" style="height: 0%"></div>
+            <div class="bt-bar lime" data-val="82%" style="height: 0%"></div>
+          </div>
+          <div class="bt-legend">
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#4ade80;margin-right:4px;"></i>빈도</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#60a5fa;margin-right:4px;"></i>궁합</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#a78bfa;margin-right:4px;"></i>핫콜드</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#fbbf24;margin-right:4px;"></i>AC값</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#f472b6;margin-right:4px;"></i>끝수</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#22d3ee;margin-right:4px;"></i>사카이</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#f87171;margin-right:4px;"></i>연번</span>
+            <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#a3e635;margin-right:4px;"></i>번호대</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Headline Break ═══ -->
+  <section class="headline-section" id="analysis">
+    <h2 class="reveal">숫자 뒤에 숨겨진<br><span class="gradient">패턴을 읽다</span></h2>
+    <p class="reveal reveal-delay-1">AC값, 끝수 분포, 연번, 낙수표, 후나츠 사카이 —<br>전문가 수준의 분석 도구를 무료로</p>
+  </section>
+
+  <!-- ═══ Feature 3: 고급 분석 ═══ -->
+  <section class="feature-section">
+    <div class="feature-inner">
+      <div class="feature-text">
+        <span class="feature-tag reveal">고급 분석</span>
+        <h2 class="reveal reveal-delay-1">모든 패턴을<br>한눈에 파악합니다</h2>
+        <p class="reveal reveal-delay-2">낙수표로 번호 흐름을 추적하고, AC값으로 번호 분산도를 분석합니다. 연금복권 전용 분석도 제공합니다.</p>
+        <ul class="feature-list reveal reveal-delay-3">
+          <li>AC값 분석 / 끝수 분포 차트</li>
+          <li>연번 패턴 / 번호대 분포</li>
+          <li>낙수표 시각화</li>
+          <li>후나츠 사카이 분석</li>
+        </ul>
+      </div>
+      <div class="feature-visual reveal-scale" id="analysis-visual">
+        <div class="analysis-viz">
+          <div class="az-row"><span class="az-label">끝수 0</span><div class="az-dots" id="az-row-0"></div></div>
+          <div class="az-row"><span class="az-label">끝수 1</span><div class="az-dots" id="az-row-1"></div></div>
+          <div class="az-row"><span class="az-label">끝수 2</span><div class="az-dots" id="az-row-2"></div></div>
+          <div class="az-row"><span class="az-label">끝수 3</span><div class="az-dots" id="az-row-3"></div></div>
+          <div class="az-row"><span class="az-label">끝수 4</span><div class="az-dots" id="az-row-4"></div></div>
+          <div class="az-row"><span class="az-label">끝수 5</span><div class="az-dots" id="az-row-5"></div></div>
+          <div class="az-row"><span class="az-label">끝수 6</span><div class="az-dots" id="az-row-6"></div></div>
+          <div class="az-row"><span class="az-label">끝수 7</span><div class="az-dots" id="az-row-7"></div></div>
+          <div class="az-row"><span class="az-label">끝수 8</span><div class="az-dots" id="az-row-8"></div></div>
+          <div class="az-row"><span class="az-label">끝수 9</span><div class="az-dots" id="az-row-9"></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Feature 4: 티켓 디자인 ═══ -->
+  <section class="feature-section">
+    <div class="feature-inner reverse">
+      <div class="feature-text">
+        <span class="feature-tag reveal">티켓 디자인</span>
+        <h2 class="reveal reveal-delay-1">실제 로또 용지처럼<br>번호를 확인하세요</h2>
+        <p class="reveal reveal-delay-2">추천 번호를 실제 로또 용지 스타일의 티켓으로 보여줍니다. 한눈에 파악할 수 있는 직관적인 디자인.</p>
+      </div>
+      <div class="feature-visual reveal-scale" id="ticket-visual">
+        <div class="ticket-viz">
+          <div class="ticket-card" id="ticket-1">
+            <div class="ticket-card-header">GAME A — 빈도분석</div>
+            <div class="ticket-balls">
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#fdd835,#f9a825);color:#333;">3</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#64b5f6,#1565c0);">17</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#64b5f6,#1565c0);">24</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#ef5350,#b71c1c);">31</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#ef5350,#b71c1c);">38</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#aed581,#33691e);">42</span>
+            </div>
+            <div class="ticket-footer">1등 적중률 순위: #1</div>
+          </div>
+          <div class="ticket-card" id="ticket-2" style="transition-delay:0.15s;">
+            <div class="ticket-card-header">GAME B — AC값 기반</div>
+            <div class="ticket-balls">
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#fdd835,#f9a825);color:#333;">7</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#fdd835,#f9a825);color:#333;">9</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#64b5f6,#1565c0);">22</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#ef5350,#b71c1c);">33</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#ef5350,#b71c1c);">39</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#aed581,#33691e);">44</span>
+            </div>
+            <div class="ticket-footer">1등 적중률 순위: #2</div>
+          </div>
+          <div class="ticket-card" id="ticket-3" style="transition-delay:0.3s;">
+            <div class="ticket-card-header">GAME C — 궁합번호</div>
+            <div class="ticket-balls">
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#fdd835,#f9a825);color:#333;">5</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#64b5f6,#1565c0);">14</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#64b5f6,#1565c0);">28</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#ef5350,#b71c1c);">35</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#aed581,#33691e);">41</span>
+              <span class="ticket-ball" style="background:linear-gradient(145deg,#aed581,#33691e);">45</span>
+            </div>
+            <div class="ticket-footer">1등 적중률 순위: #3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Feature 5: 내 번호 관리 ═══ -->
+  <section class="feature-section">
+    <div class="feature-inner">
+      <div class="feature-text">
+        <span class="feature-tag reveal">내 번호 관리</span>
+        <h2 class="reveal reveal-delay-1">저장하고, 확인하고,<br>안전하게 백업합니다</h2>
+        <p class="reveal reveal-delay-2">추천받은 번호를 저장하고 드래그앤드롭으로 정리하세요. 당첨 확인은 자동으로, 암호화 코드로 안전하게 백업합니다.</p>
+        <ul class="feature-list reveal reveal-delay-3">
+          <li>번호 저장 / 드래그앤드롭 정리</li>
+          <li>자동 당첨 확인</li>
+          <li>암호화 내보내기 / 불러오기</li>
+        </ul>
+      </div>
+      <div class="feature-visual reveal-scale" id="manage-visual">
+        <div class="manage-viz">
+          <div class="manage-item" id="mi-1">
+            <span class="manage-grip">⠿</span>
+            <div class="manage-balls">
+              <span class="manage-ball" style="background:#f9a825;">3</span>
+              <span class="manage-ball" style="background:#1565c0;">17</span>
+              <span class="manage-ball" style="background:#1565c0;">24</span>
+              <span class="manage-ball" style="background:#b71c1c;">31</span>
+              <span class="manage-ball" style="background:#b71c1c;">38</span>
+              <span class="manage-ball" style="background:#33691e;">42</span>
+            </div>
+            <span class="manage-round">1160회</span>
+            <span class="manage-badge badge-win">5등</span>
+          </div>
+          <div class="manage-item" id="mi-2" style="transition-delay:0.1s;">
+            <span class="manage-grip">⠿</span>
+            <div class="manage-balls">
+              <span class="manage-ball" style="background:#f9a825;">7</span>
+              <span class="manage-ball" style="background:#f9a825;">9</span>
+              <span class="manage-ball" style="background:#1565c0;">22</span>
+              <span class="manage-ball" style="background:#b71c1c;">33</span>
+              <span class="manage-ball" style="background:#b71c1c;">39</span>
+              <span class="manage-ball" style="background:#33691e;">44</span>
+            </div>
+            <span class="manage-round">1160회</span>
+            <span class="manage-badge badge-none">미당첨</span>
+          </div>
+          <div class="manage-item" id="mi-3" style="transition-delay:0.2s;">
+            <span class="manage-grip">⠿</span>
+            <div class="manage-balls">
+              <span class="manage-ball" style="background:#f9a825;">5</span>
+              <span class="manage-ball" style="background:#1565c0;">14</span>
+              <span class="manage-ball" style="background:#1565c0;">28</span>
+              <span class="manage-ball" style="background:#b71c1c;">35</span>
+              <span class="manage-ball" style="background:#33691e;">41</span>
+              <span class="manage-ball" style="background:#33691e;">45</span>
+            </div>
+            <span class="manage-round">1159회</span>
+            <span class="manage-badge badge-none">미당첨</span>
+          </div>
+          <div class="manage-item" id="mi-4" style="transition-delay:0.3s;">
+            <span class="manage-grip">⠿</span>
+            <div class="manage-balls">
+              <span class="manage-ball" style="background:#f9a825;">2</span>
+              <span class="manage-ball" style="background:#1565c0;">11</span>
+              <span class="manage-ball" style="background:#1565c0;">19</span>
+              <span class="manage-ball" style="background:#1565c0;">27</span>
+              <span class="manage-ball" style="background:#b71c1c;">36</span>
+              <span class="manage-ball" style="background:#33691e;">43</span>
+            </div>
+            <span class="manage-round">1159회</span>
+            <span class="manage-badge badge-win">4등</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ Headline Break 2 ═══ -->
+  <section class="headline-section">
+    <h2 class="reveal">연금복권720+도<br><span class="gradient">완벽 지원</span></h2>
+    <p class="reveal reveal-delay-1">연금복권 전용 추천 알고리즘, 고급 분석,<br>위치별 색상 그라데이션까지</p>
+  </section>
+
+  <!-- ═══ Version Timeline ═══ -->
+  <section class="version-section" id="updates">
+    <div class="version-inner">
+      <div class="version-header">
+        <h2 class="reveal">업데이트 내역</h2>
+        <p class="reveal reveal-delay-1">끊임없이 진화하는 분석 도구</p>
+      </div>
+
+      <div class="latest-release reveal">
+        <div class="lr-header">
+          <span class="lr-badge">Latest</span>
+          <span class="lr-version">v3.1.0</span>
+          <span class="lr-date">2026-03-11</span>
+        </div>
+        <div class="lr-changes">
+          <div class="lr-item"><span class="lr-tag lr-tag-new">NEW</span><span>번호 추천 알고리즘 필터 칩 + 카드별 백테스트 순위/미니바</span></div>
+          <div class="lr-item"><span class="lr-tag lr-tag-new">NEW</span><span>백테스트 횟수 설정 (50/100/200/300회 선택)</span></div>
+          <div class="lr-item"><span class="lr-tag lr-tag-new">NEW</span><span>내 번호 암호화 내보내기/불러오기 (코드 복사 방식)</span></div>
+          <div class="lr-item"><span class="lr-tag lr-tag-ui">UI</span><span>전체 UI 개편 (사이드바, 카드, 버튼, 테이블, 모달, 토스트, 볼 효과)</span></div>
+          <div class="lr-item"><span class="lr-tag lr-tag-ui">UI</span><span>번호 추천 카드 → 로또 용지 스타일 티켓 디자인</span></div>
+          <div class="lr-item"><span class="lr-tag lr-tag-imp">개선</span><span>페이지별 도움말 시스템 (14개 페이지 개별 가이드)</span></div>
+          <div class="lr-item"><span class="lr-tag lr-tag-imp">개선</span><span>백테스트 결과 상시 펼침</span></div>
+        </div>
+      </div>
+
+      <div class="timeline reveal">
+        <div class="timeline-entry">
+          <div class="tl-header"><span class="tl-ver">v3.0.1</span><span class="tl-badge tl-patch">patch</span><span class="tl-date">2026-03-08</span></div>
+          <ul class="tl-changes"><li>변경 내역(changelog) 누락 수정</li><li>자동 업데이트 안정화</li></ul>
+        </div>
+        <div class="timeline-entry">
+          <div class="tl-header"><span class="tl-ver">v3.0.0</span><span class="tl-badge tl-major">major</span><span class="tl-date">2026-03-08</span></div>
+          <ul class="tl-changes">
+            <li>로또/연금복권 100회 백테스트 (Worker 병렬 실행)</li>
+            <li>백테스트 결과 테이블 (알고리즘 성능순 표시)</li>
+            <li>고급 분석 탭 (AC값, 끝수, 연번, 번호대, 낙수표, 후나츠 사카이)</li>
+            <li>연금복권 고급 분석 / 내 번호 DnD / 설정 페이지</li>
+          </ul>
+        </div>
+        <div class="timeline-entry">
+          <div class="tl-header"><span class="tl-ver">v2.11.x</span><span class="tl-badge tl-minor">minor</span><span class="tl-date">2025-03</span></div>
+          <ul class="tl-changes"><li>데이터 업데이트 후 당첨 이력 갱신 버그 수정</li><li>TOP5 복사+저장 / 트레이 알림 / 자동 업데이트 체크</li></ul>
+        </div>
+        <div class="timeline-entry">
+          <div class="tl-header"><span class="tl-ver">v2.10.0</span><span class="tl-badge tl-minor">minor</span><span class="tl-date">2025-03-06</span></div>
+          <ul class="tl-changes"><li>API 호출 최적화 (임베디드 데이터 번들)</li><li>업데이트 버튼 애니메이션 / 프로그래스 모달</li></ul>
+        </div>
+        <div class="timeline-entry">
+          <div class="tl-header"><span class="tl-ver">v2.9.x ~ v2.0.0</span><span class="tl-badge tl-patch">earlier</span><span class="tl-date">2025-02 ~ 2025-03</span></div>
+          <ul class="tl-changes">
+            <li>알고리즘 애니메이션 / 추천번호 저장 / 당첨 이력 탭</li>
+            <li>내 번호 관리 / 연금복권720+ 추천</li>
+            <li>커스텀 아이콘 / 트레이 / 튜토리얼 / 자동 업데이트</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CTA ═══ -->
+  <section class="cta-section">
+    <h2 class="reveal">지금 바로<br><span class="gradient">시작하세요</span></h2>
+    <p class="reveal reveal-delay-1">무료 & 오픈소스 — Windows 전용</p>
+    <div class="hero-cta reveal reveal-delay-2">
+      <a href="https://github.com/rlaeksxp3457/lotto-recommender/releases/latest" target="_blank" class="btn-hero btn-hero-primary">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M2.75 14A1.75 1.75 0 0 1 1 12.25v-2.5a.75.75 0 0 1 1.5 0v2.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-2.5a.75.75 0 0 1 1.5 0v2.5A1.75 1.75 0 0 1 13.25 14ZM7.25 7.689V2a.75.75 0 0 1 1.5 0v5.689l1.97-1.969a.749.749 0 1 1 1.06 1.06l-3.25 3.25a.749.749 0 0 1-1.06 0L4.22 6.78a.749.749 0 1 1 1.06-1.06l1.97 1.969Z"/></svg>
+        Windows 다운로드
+      </a>
+    </div>
+  </section>
+
+  <!-- ═══ Footer ═══ -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="https://github.com/rlaeksxp3457/lotto-recommender" target="_blank">GitHub</a>
+        <a href="https://github.com/rlaeksxp3457/lotto-recommender/releases/latest" target="_blank">다운로드</a>
+        <a href="https://github.com/rlaeksxp3457/lotto-recommender/issues" target="_blank">버그 제보</a>
+      </div>
+      <p class="footer-copy">로또 추천기 v3.1.0 — rlaeksxp3457</p>
+      <div class="footer-badges">
+        <span class="footer-badge">Electron 35</span>
+        <span class="footer-badge">JavaScript</span>
+        <span class="footer-badge">Windows</span>
+        <span class="footer-badge">Auto Update</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══ Scripts ═══ -->
+  <script>
+    /* ──────────────────────────────────
+       Hero entrance animation
+    ────────────────────────────────── */
+    (function heroEntrance() {
+      const els = [
+        { el: document.getElementById('hero-chip'), delay: 200 },
+        { el: document.getElementById('hero-title'), delay: 400 },
+        { el: document.getElementById('hero-sub'), delay: 600 },
+        { el: document.getElementById('hero-balls'), delay: 800 },
+        { el: document.getElementById('hero-cta'), delay: 1000 },
+      ];
+      els.forEach(({ el, delay }) => {
+        if (!el) return;
+        setTimeout(() => {
+          el.style.transition = 'opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)';
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        }, delay);
+      });
+    })();
+
+    /* ──────────────────────────────────
+       Scroll Reveal (Intersection Observer)
+    ────────────────────────────────── */
+    const isMobile = window.innerWidth <= 768;
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: isMobile ? 0.05 : 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal, .reveal-scale, .reveal-left, .reveal-right').forEach(el => {
+      revealObserver.observe(el);
+    });
+
+    /* ──────────────────────────────────
+       Counter animation
+    ────────────────────────────────── */
+    const counterObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          const target = parseInt(el.dataset.count);
+          const duration = 1500;
+          const start = performance.now();
+          function update(now) {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            el.textContent = Math.round(target * eased);
+            if (progress < 1) requestAnimationFrame(update);
+          }
+          requestAnimationFrame(update);
+          counterObserver.unobserve(el);
+        }
+      });
+    }, { threshold: isMobile ? 0.2 : 0.5 });
+
+    document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(el));
+
+    /* ──────────────────────────────────
+       Algorithm bars animation
+    ────────────────────────────────── */
+    const algoObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.algo-bar-fill').forEach((bar, i) => {
+            setTimeout(() => {
+              bar.style.width = bar.dataset.width + '%';
+            }, i * 120);
+          });
+          algoObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: isMobile ? 0.05 : 0.2 });
+
+    const algoVisual = document.getElementById('algo-visual');
+    if (algoVisual) algoObserver.observe(algoVisual);
+
+    /* ──────────────────────────────────
+       Backtest chart animation
+    ────────────────────────────────── */
+    const btObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const bars = entry.target.querySelectorAll('.bt-bar');
+          const heights = [87, 73, 65, 91, 59, 78, 68, 82];
+          bars.forEach((bar, i) => {
+            setTimeout(() => {
+              bar.style.height = heights[i] + '%';
+            }, i * 80);
+          });
+          btObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: isMobile ? 0.05 : 0.2 });
+
+    const btVisual = document.getElementById('backtest-visual');
+    if (btVisual) btObserver.observe(btVisual);
+
+    /* ──────────────────────────────────
+       Analysis heatmap animation
+    ────────────────────────────────── */
+    const azObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const colors = [
+            'rgba(88,101,242,0.15)', 'rgba(88,101,242,0.25)', 'rgba(88,101,242,0.35)',
+            'rgba(88,101,242,0.45)', 'rgba(88,101,242,0.55)', 'rgba(88,101,242,0.65)',
+            'rgba(88,101,242,0.75)', 'rgba(88,101,242,0.85)', 'rgba(88,101,242,0.95)',
+          ];
+          for (let row = 0; row < 10; row++) {
+            const container = document.getElementById('az-row-' + row);
+            if (!container) continue;
+            const count = 3 + Math.floor(Math.random() * 8);
+            for (let i = 0; i < count; i++) {
+              const dot = document.createElement('div');
+              dot.className = 'az-dot';
+              dot.style.background = colors[Math.floor(Math.random() * colors.length)];
+              container.appendChild(dot);
+              setTimeout(() => dot.classList.add('visible'), 50 + row * 60 + i * 40);
+            }
+          }
+          azObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: isMobile ? 0.05 : 0.2 });
+
+    const azVisual = document.getElementById('analysis-visual');
+    if (azVisual) azObserver.observe(azVisual);
+
+    /* ──────────────────────────────────
+       Ticket cards animation
+    ────────────────────────────────── */
+    const ticketObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.ticket-card').forEach(card => {
+            card.classList.add('visible');
+          });
+          ticketObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: isMobile ? 0.05 : 0.2 });
+
+    const ticketVisual = document.getElementById('ticket-visual');
+    if (ticketVisual) ticketObserver.observe(ticketVisual);
+
+    /* ──────────────────────────────────
+       Manage items animation
+    ────────────────────────────────── */
+    const manageObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.manage-item').forEach(item => {
+            item.classList.add('visible');
+          });
+          manageObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: isMobile ? 0.05 : 0.2 });
+
+    const manageVisual = document.getElementById('manage-visual');
+    if (manageVisual) manageObserver.observe(manageVisual);
+
+    /* ──────────────────────────────────
+       Nav scroll effect
+    ────────────────────────────────── */
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+      const nav = document.querySelector('nav');
+      const scrollY = window.scrollY;
+      if (scrollY > 100) {
+        nav.style.background = 'rgba(0,0,0,0.88)';
+        nav.style.borderBottomColor = 'rgba(255,255,255,0.1)';
+      } else {
+        nav.style.background = 'rgba(0,0,0,0.72)';
+        nav.style.borderBottomColor = 'transparent';
+      }
+      lastScroll = scrollY;
+    }, { passive: true });
+  </script>
+
+</body>
+</html>
