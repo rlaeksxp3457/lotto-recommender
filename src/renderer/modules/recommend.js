@@ -318,13 +318,14 @@ export async function generateRecommendations(getCount, getSelectedAlgos) {
 
       saveAllBtn.addEventListener("click", async () => {
         const round = (state.summary?.lastRound || 0) + 1;
-        const batchId = "batch_" + Date.now();
+        const baseBatchId = "batch_" + Date.now();
         saveAllBtn.disabled = true;
         saveAllBtn.innerHTML = '<span class="spinner"></span> 저장 중...';
         let ok = 0;
-        for (const rec of recs) {
+        for (let i = 0; i < recs.length; i++) {
+          const batchId = baseBatchId + (i < 5 ? "" : `_${Math.floor(i / 5)}`);
           const res = await window.api.myNumbersSave({
-            type: "lotto", round, numbers: [...rec.numbers], batchId,
+            type: "lotto", round, numbers: [...recs[i].numbers], batchId,
           });
           if (!res.error) ok++;
         }
@@ -344,7 +345,7 @@ export async function generateRecommendations(getCount, getSelectedAlgos) {
       copyAndSaveBtn.innerHTML = `${svgCopy} 복사 + 저장`;
       copyAndSaveBtn.addEventListener("click", async () => {
         const round = (state.summary?.lastRound || 0) + 1;
-        const batchId = "batch_" + Date.now();
+        const baseBatchId = "batch_" + Date.now();
         copyAndSaveBtn.disabled = true;
         copyAndSaveBtn.innerHTML = '<span class="spinner"></span> 처리 중...';
         const lines = recs.map((rec, i) =>
@@ -353,9 +354,10 @@ export async function generateRecommendations(getCount, getSelectedAlgos) {
         const text = `\u{1F3B0} ${algoName} 추천번호 (${round}회)\n${lines.join("\n")}`;
         await navigator.clipboard.writeText(text);
         let ok = 0;
-        for (const rec of recs) {
+        for (let i = 0; i < recs.length; i++) {
+          const batchId = baseBatchId + (i < 5 ? "" : `_${Math.floor(i / 5)}`);
           const res = await window.api.myNumbersSave({
-            type: "lotto", round, numbers: [...rec.numbers], batchId,
+            type: "lotto", round, numbers: [...recs[i].numbers], batchId,
           });
           if (!res.error) ok++;
         }

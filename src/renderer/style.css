@@ -328,6 +328,9 @@ body {
   color: #fff;
   animation: pulse 1.5s ease infinite;
 }
+.update-badge.hidden {
+  display: none;
+}
 
 /* ─── 드롭다운 ─── */
 

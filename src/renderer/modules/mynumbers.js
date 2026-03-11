@@ -418,13 +418,20 @@ function groupByBatch(items) {
 
   const result = [];
 
-  // batchId가 있는 엔트리
+  // batchId가 있는 엔트리 (5개 초과 시 용지 분할)
   for (const [batchId, entries] of Object.entries(batchMap)) {
-    result.push({
-      round: entries[0].round,
-      batchId,
-      entries: entries.sort((a, b) => parseInt(a.id) - parseInt(b.id)),
-    });
+    const sorted = entries.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+    if (sorted.length <= 5) {
+      result.push({ round: sorted[0].round, batchId, entries: sorted });
+    } else {
+      for (let i = 0; i < sorted.length; i += 5) {
+        result.push({
+          round: sorted[0].round,
+          batchId: i === 0 ? batchId : `${batchId}_${i / 5}`,
+          entries: sorted.slice(i, i + 5),
+        });
+      }
+    }
   }
 
   // 레거시 (batchId 없음): round별 5개씩 분리 (기존 batchId와 충돌 방지)
