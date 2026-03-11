@@ -163,25 +163,32 @@ function getLastDrawDate(kst, dayOfWeek, hour, minute) {
 export function checkUpdateNeeded() {
   const now = new Date();
   const kst = new Date(now.getTime() + (540 + now.getTimezoneOffset()) * 60000);
-  let needsUpdate = false;
+  let lottoNeed = false;
+  let pensionNeed = false;
 
   // 로또: 토요일(6) 21:15 이후
   if (state.summary?.dateRange?.to) {
     const lastData = state.summary.dateRange.to.replace(/-/g, "");
     const lastDraw = getLastDrawDate(kst, 6, 21, 15);
-    if (lastData < lastDraw) needsUpdate = true;
+    if (lastData < lastDraw) lottoNeed = true;
   }
 
   // 연금복권: 목요일(4) 19:35 이후
   if (state.pensionSummary?.dateRange?.to) {
     const lastData = state.pensionSummary.dateRange.to.replace(/-/g, "");
     const lastDraw = getLastDrawDate(kst, 4, 19, 35);
-    if (lastData < lastDraw) needsUpdate = true;
+    if (lastData < lastDraw) pensionNeed = true;
   }
 
   const btn = document.getElementById("btn-update");
-  if (needsUpdate) btn.classList.add("needs-update");
+  const lottoBadge = document.getElementById("lotto-update-badge");
+  const pensionBadge = document.getElementById("pension-update-badge");
+
+  if (lottoNeed || pensionNeed) btn.classList.add("needs-update");
   else btn.classList.remove("needs-update");
+
+  if (lottoBadge) lottoBadge.classList.toggle("hidden", !lottoNeed);
+  if (pensionBadge) pensionBadge.classList.toggle("hidden", !pensionNeed);
 }
 
 function initAppUpdate() {
