@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#111113"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5865f2"/>
+      <stop offset="100%" stop-color="#8b96f7"/>
+    </linearGradient>
+    <linearGradient id="ball-y" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fdd835"/><stop offset="100%" stop-color="#f9a825"/>
+    </linearGradient>
+    <linearGradient id="ball-b" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#64b5f6"/><stop offset="100%" stop-color="#1565c0"/>
+    </linearGradient>
+    <linearGradient id="ball-r" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef5350"/><stop offset="100%" stop-color="#b71c1c"/>
+    </linearGradient>
+    <linearGradient id="ball-g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#aed581"/><stop offset="100%" stop-color="#33691e"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(88,101,242,0.15)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Glow -->
+  <ellipse cx="600" cy="315" rx="500" ry="350" fill="url(#glow)"/>
+
+  <!-- Version chip -->
+  <rect x="496" y="100" width="108" height="28" rx="14" fill="#5865f2"/>
+  <text x="550" y="119" text-anchor="middle" font-family="'Noto Sans KR', sans-serif" font-size="13" font-weight="700" fill="#fff">v3.1.0</text>
+
+  <!-- Title -->
+  <text x="600" y="195" text-anchor="middle" font-family="'Noto Sans KR', sans-serif" font-size="56" font-weight="900" fill="#f5f5f7">당신의 번호를</text>
+  <text x="600" y="265" text-anchor="middle" font-family="'Noto Sans KR', sans-serif" font-size="56" font-weight="900" fill="url(#accent)">데이터로 분석</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="315" text-anchor="middle" font-family="'Noto Sans KR', sans-serif" font-size="18" font-weight="300" fill="#86868b">8가지 통계 알고리즘 + 최대 300회 백테스트로 검증된 번호 추천</text>
+
+  <!-- Lotto Balls -->
+  <circle cx="350" cy="420" r="36" fill="url(#ball-y)" filter="url(#shadow)"/>
+  <text x="350" y="430" text-anchor="middle" font-family="Arial" font-size="24" font-weight="800" fill="#333">3</text>
+
+  <circle cx="435" cy="410" r="34" fill="url(#ball-b)" filter="url(#shadow)"/>
+  <text x="435" y="420" text-anchor="middle" font-family="Arial" font-size="22" font-weight="800" fill="#fff">17</text>
+
+  <circle cx="520" cy="425" r="38" fill="url(#ball-b)" filter="url(#shadow)"/>
+  <text x="520" y="435" text-anchor="middle" font-family="Arial" font-size="24" font-weight="800" fill="#fff">24</text>
+
+  <circle cx="610" cy="415" r="35" fill="url(#ball-r)" filter="url(#shadow)"/>
+  <text x="610" y="425" text-anchor="middle" font-family="Arial" font-size="22" font-weight="800" fill="#fff">31</text>
+
+  <circle cx="695" cy="422" r="33" fill="url(#ball-r)" filter="url(#shadow)"/>
+  <text x="695" y="432" text-anchor="middle" font-family="Arial" font-size="22" font-weight="800" fill="#fff">38</text>
+
+  <circle cx="778" cy="412" r="37" fill="url(#ball-g)" filter="url(#shadow)"/>
+  <text x="778" y="422" text-anchor="middle" font-family="Arial" font-size="24" font-weight="800" fill="#fff">42</text>
+
+  <!-- Features -->
+  <text x="600" y="520" text-anchor="middle" font-family="'Noto Sans KR', sans-serif" font-size="15" font-weight="400" fill="#6e6e73">로또 6/45  ·  연금복권720+  ·  고급 분석  ·  백테스트  ·  내 번호 관리</text>
+
+  <!-- Bottom bar -->
+  <rect x="0" y="575" width="1200" height="55" fill="rgba(0,0,0,0.4)"/>
+  <text x="40" y="608" font-family="'Noto Sans KR', sans-serif" font-size="14" font-weight="600" fill="#86868b">rlaeksxp3457.github.io/lotto-recommender</text>
+  <text x="1160" y="608" text-anchor="end" font-family="'Noto Sans KR', sans-serif" font-size="14" font-weight="500" fill="#5865f2">무료 다운로드 →</text>
+</svg>

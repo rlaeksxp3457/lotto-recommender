@@ -3,12 +3,155 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>로또 추천기 - 데이터로 분석하는 행운</title>
-  <meta name="description" content="통계 기반 알고리즘과 백테스트로 검증된 로또 6/45, 연금복권720+ 번호 추천 프로그램. 무료 & 오픈소스.">
-  <meta property="og:title" content="로또 추천기 v3.1.0">
-  <meta property="og:description" content="통계 기반 알고리즘 + 백테스트로 검증된 번호 추천">
+
+  <!-- ═══ Primary Meta ═══ -->
+  <title>로또 추천기 — 8가지 통계 알고리즘으로 분석하는 로또 번호 추천</title>
+  <meta name="description" content="빈도분석, 궁합번호, AC값, 후나츠 사카이 등 8가지 알고리즘과 최대 300회 백테스트로 검증된 로또 6/45 & 연금복권720+ 번호 추천. 무료 오픈소스 Windows 앱.">
+  <meta name="keywords" content="로또, 로또 추천, 로또 번호 추천, 로또 분석, 로또 알고리즘, 연금복권, 연금복권720, 백테스트, 당첨번호 분석, 로또 통계, AC값, 궁합번호, 후나츠 사카이, 로또 프로그램">
+  <meta name="author" content="rlaeksxp3457">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+  <meta name="theme-color" content="#5865f2">
+  <meta name="color-scheme" content="dark">
+  <meta name="application-name" content="로또 추천기">
+
+  <!-- ═══ Canonical ═══ -->
+  <link rel="canonical" href="https://rlaeksxp3457.github.io/lotto-recommender/">
+
+  <!-- ═══ Open Graph (Facebook, KakaoTalk, Discord) ═══ -->
   <meta property="og:type" content="website">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎱</text></svg>">
+  <meta property="og:site_name" content="로또 추천기">
+  <meta property="og:title" content="로또 추천기 — 데이터로 분석하는 로또 번호 추천">
+  <meta property="og:description" content="8가지 통계 알고리즘 + 최대 300회 백테스트로 검증된 로또 6/45 & 연금복권720+ 번호 추천. 무료 & 오픈소스.">
+  <meta property="og:url" content="https://rlaeksxp3457.github.io/lotto-recommender/">
+  <meta property="og:image" content="https://rlaeksxp3457.github.io/lotto-recommender/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="로또 추천기 — 8가지 알고리즘으로 분석하는 번호 추천">
+  <meta property="og:locale" content="ko_KR">
+
+  <!-- ═══ Twitter Card ═══ -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="로또 추천기 — 데이터로 분석하는 로또 번호 추천">
+  <meta name="twitter:description" content="8가지 통계 알고리즘 + 최대 300회 백테스트. 무료 오픈소스 Windows 앱.">
+  <meta name="twitter:image" content="https://rlaeksxp3457.github.io/lotto-recommender/og-image.png">
+  <meta name="twitter:image:alt" content="로또 추천기 앱 미리보기">
+
+  <!-- ═══ Naver / Daum SEO ═══ -->
+  <meta name="naver-site-verification" content="">
+  <meta property="dg:official" content="true">
+
+  <!-- ═══ Favicon & Icons ═══ -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎱</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎱</text></svg>">
+
+  <!-- ═══ Structured Data (JSON-LD) ═══ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "로또 추천기",
+    "alternateName": "Lotto Recommender",
+    "description": "8가지 통계 알고리즘과 최대 300회 백테스트로 검증된 로또 6/45 & 연금복권720+ 번호 추천 프로그램",
+    "url": "https://rlaeksxp3457.github.io/lotto-recommender/",
+    "downloadUrl": "https://github.com/rlaeksxp3457/lotto-recommender/releases/latest",
+    "softwareVersion": "3.1.0",
+    "datePublished": "2026-03-11",
+    "operatingSystem": "Windows 10, Windows 11",
+    "applicationCategory": "UtilitiesApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "KRW"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "rlaeksxp3457",
+      "url": "https://github.com/rlaeksxp3457"
+    },
+    "softwareRequirements": "Windows 10 이상",
+    "fileSize": "80MB",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "featureList": [
+      "로또 6/45 번호 추천",
+      "연금복권720+ 번호 추천",
+      "8가지 통계 기반 알고리즘",
+      "최대 300회 백테스트 검증",
+      "고급 분석 (AC값, 끝수, 연번, 낙수표, 후나츠 사카이)",
+      "내 번호 관리 및 당첨 확인",
+      "암호화 내보내기/불러오기",
+      "자동 업데이트"
+    ]
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "로또 추천기 — 데이터로 분석하는 로또 번호 추천",
+    "description": "통계 기반 알고리즘과 백테스트로 검증된 로또 6/45, 연금복권720+ 번호 추천 프로그램",
+    "url": "https://rlaeksxp3457.github.io/lotto-recommender/",
+    "inLanguage": "ko",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "로또 추천기",
+      "url": "https://rlaeksxp3457.github.io/lotto-recommender/"
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "홈",
+        "item": "https://rlaeksxp3457.github.io/lotto-recommender/"
+      }]
+    }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "로또 추천기는 무료인가요?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "네, 로또 추천기는 완전 무료이며 오픈소스입니다. GitHub에서 소스코드를 확인할 수 있습니다."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "어떤 알고리즘으로 번호를 추천하나요?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "빈도분석, 궁합번호, 핫/콜드 넘버, AC값 기반, 끝수분석, 번호대, 연번, 후나츠 사카이 등 8가지 통계 기반 알고리즘을 사용합니다."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "백테스트란 무엇인가요?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "백테스트는 과거 추첨 데이터(최대 300회)를 사용하여 각 알고리즘의 적중률을 검증하는 기능입니다. 실제 성능을 수치로 확인할 수 있습니다."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "연금복권720+도 지원하나요?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "네, 연금복권720+ 전용 추천 알고리즘과 고급 분석 기능을 제공하며, 위치별 색상 그라데이션도 지원합니다."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!-- ═══ Fonts ═══ -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
