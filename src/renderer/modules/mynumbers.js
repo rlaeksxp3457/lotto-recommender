@@ -71,6 +71,7 @@ function rankClass(rank) {
   if (rank === 2) return "rank-2nd";
   if (rank === 3) return "rank-3rd";
   if (rank >= 4 && rank <= 7) return "rank-minor";
+  if (rank === 8) return "rank-2nd"; // 보너스 (2등과 동일 당첨금)
   return "rank-miss";
 }
 
@@ -568,6 +569,23 @@ function renderTicketList(items, containerId, type) {
           digit.textContent = d;
           winBalls.appendChild(digit);
         });
+        // 보너스 번호 표시
+        if (checkedEntry.result.bonusDigits) {
+          const plus = document.createElement("span");
+          plus.className = "bonus-plus";
+          plus.textContent = "+";
+          winBalls.appendChild(plus);
+          const bonusLabel = document.createElement("span");
+          bonusLabel.className = "pension-bonus-label";
+          bonusLabel.textContent = "보너스";
+          winBalls.appendChild(bonusLabel);
+          checkedEntry.result.bonusDigits.forEach((d, i) => {
+            const digit = document.createElement("span");
+            digit.className = `pension-digit pos-${i + 1} bonus-digit`;
+            digit.textContent = d;
+            winBalls.appendChild(digit);
+          });
+        }
       }
       winRow.appendChild(winBalls);
       ticket.appendChild(winRow);
@@ -631,10 +649,34 @@ function renderTicketList(items, containerId, type) {
         tag.className = `pension-group-tag${hasResult && !groupMatch ? " tag-miss" : ""}`;
         tag.textContent = `${item.group}조`;
         balls.appendChild(tag);
+
+        // 끝자리부터 연속 일치 개수 계산
+        let matchFromEnd = 0;
+        if (hasResult && item.result.rank !== 8) {
+          const wd = item.result.winDigits;
+          if (wd) {
+            for (let j = 5; j >= 0; j--) {
+              if (item.digits[j] === wd[j]) matchFromEnd++;
+              else break;
+            }
+          }
+        }
+        const isBonus = hasResult && item.result.rank === 8;
+        const bonusDigits = hasResult ? item.result.bonusDigits : null;
+
         item.digits.forEach((d, i) => {
           const digit = document.createElement("span");
-          const digitMatch = hasResult && item.result.winDigits ? item.result.winDigits[i] === d : false;
-          digit.className = `pension-digit pos-${i + 1}${hasResult && !digitMatch ? " digit-miss" : ""}`;
+          let miss = false;
+          if (hasResult) {
+            if (isBonus) {
+              // 보너스: bonusDigits와 비교
+              miss = !bonusDigits || bonusDigits[i] !== d;
+            } else {
+              // 끝자리부터 matchFromEnd자리만 일치 표시
+              miss = i < 6 - matchFromEnd;
+            }
+          }
+          digit.className = `pension-digit pos-${i + 1}${miss ? " digit-miss" : ""}`;
           digit.textContent = d;
           balls.appendChild(digit);
         });
@@ -652,7 +694,11 @@ function renderTicketList(items, containerId, type) {
         if (type === "lotto") {
           detail.textContent = `${item.result.matchCount}개 일치${item.result.bonus ? " +보너스" : ""}`;
         } else {
-          detail.textContent = `${item.result.matchDigits}자리 일치`;
+          if (item.result.rank === 8) {
+            detail.textContent = "보너스 6자리 일치";
+          } else {
+            detail.textContent = `끝 ${item.result.matchDigits}자리 일치`;
+          }
         }
         badgeWrap.appendChild(badge);
         badgeWrap.appendChild(detail);
@@ -691,9 +737,22 @@ function renderTicketList(items, containerId, type) {
     const prizeLabel = document.createElement("span");
     prizeLabel.className = "my-ticket-prize";
     if (allChecked) {
-      const total = calcTicketPrize(group.entries);
-      prizeLabel.textContent = total > 0 ? `당첨금: ${formatAmount(total)}` : "미당첨";
-      if (total > 0) prizeLabel.classList.add("has-prize");
+      const anyWon = group.entries.some(e => e.result && e.result.rank > 0);
+      if (type === "pension") {
+        // 연금복권: 당첨금이 연금/일시불 혼합이라 prizeInfo 대신 등수로 판별
+        if (anyWon) {
+          const bestRank = Math.min(...group.entries.filter(e => e.result && e.result.rank > 0).map(e => e.result.rank));
+          const prizeMap = { 1: "월 700만원×20년", 2: "월 100만원×10년", 3: "100만원", 4: "10만원", 5: "5만원", 6: "5,000원", 7: "1,000원", 8: "월 100만원×10년" };
+          prizeLabel.textContent = `당첨! (${prizeMap[bestRank] || ""})`;
+          prizeLabel.classList.add("has-prize");
+        } else {
+          prizeLabel.textContent = "미당첨";
+        }
+      } else {
+        const total = calcTicketPrize(group.entries);
+        prizeLabel.textContent = total > 0 ? `당첨금: ${formatAmount(total)}` : "미당첨";
+        if (total > 0) prizeLabel.classList.add("has-prize");
+      }
     }
 
     const actions = document.createElement("div");
@@ -706,6 +765,13 @@ function renderTicketList(items, containerId, type) {
       checkBtn.textContent = "당첨 확인";
       checkBtn.addEventListener("click", () => batchCheck(group.entries, type, checkBtn));
       actions.appendChild(checkBtn);
+    } else {
+      // 이미 확인된 카드: 다시 확인 버튼
+      const recheckBtn = document.createElement("button");
+      recheckBtn.className = `my-ticket-check-btn recheck${isPension ? " pension" : ""}`;
+      recheckBtn.textContent = "다시 확인";
+      recheckBtn.addEventListener("click", () => batchRecheck(group.entries, type, recheckBtn));
+      actions.appendChild(recheckBtn);
     }
 
     const copyBtn = document.createElement("button");
@@ -772,6 +838,26 @@ async function batchCheck(entries, type, btn) {
   }
 
   showToast(`${entries[0].round}회 당첨 결과를 확인했습니다.`, "info");
+  await loadAndRenderMyNumbers(type);
+}
+
+async function batchRecheck(entries, type, btn) {
+  btn.disabled = true;
+  btn.textContent = "확인 중...";
+  const api = type === "lotto" ? window.api.myNumbersCheckLotto : window.api.myNumbersCheckPension;
+
+  for (const entry of entries) {
+    entry.result = null; // 기존 결과 초기화
+    const res = await api(entry.id);
+    if (res.error) {
+      showToast(res.error, "error");
+      btn.disabled = false;
+      btn.textContent = "다시 확인";
+      return;
+    }
+  }
+
+  showToast(`${entries[0].round}회 당첨 결과를 다시 확인했습니다.`, "info");
   await loadAndRenderMyNumbers(type);
 }
 

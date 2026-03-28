@@ -2425,6 +2425,16 @@ body {
 .my-ticket-win-balls .pension-digit.pos-4 { background: linear-gradient(135deg, #74c0fc, #3498db); }
 .my-ticket-win-balls .pension-digit.pos-5 { background: linear-gradient(135deg, #b197fc, #8e44ad); }
 .my-ticket-win-balls .pension-digit.pos-6 { background: linear-gradient(135deg, #f783ac, #e84393); }
+.my-ticket-win-balls .pension-bonus-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #ed4245;
+  margin-right: 2px;
+}
+.my-ticket-win-balls .pension-digit.bonus-digit {
+  opacity: 0.75;
+  border: 1.5px solid rgba(237, 66, 69, 0.5);
+}
 .my-ticket-games { padding: 4px 0; flex: 1; min-height: 198px; }
 .my-ticket-game {
   display: flex;
@@ -2553,6 +2563,14 @@ body {
 .my-ticket-check-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .my-ticket-check-btn.pension { background: #0077b6; }
 .my-ticket-check-btn.pension:hover { background: #0096c7; }
+.my-ticket-check-btn.recheck {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 10px;
+  padding: 3px 8px;
+}
+.my-ticket-check-btn.recheck:hover { background: rgba(255,255,255,0.06); color: var(--text-dim); }
 .my-ticket-copy-btn {
   background: none;
   border: 1px solid var(--border);

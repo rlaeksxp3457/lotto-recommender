@@ -61,27 +61,37 @@ function checkLottoResult(myNumbers, winNumbers, bonusNumber) {
 
 // ─── 연금복권 당첨 확인 ───
 
-function checkPensionResult(myGroup, myDigits, winGroup, winDigits) {
+function checkPensionResult(myGroup, myDigits, winGroup, winDigits, bonusDigits) {
   // 1등: 조 + 6자리 모두 일치
   if (myGroup === winGroup) {
     const allMatch = myDigits.every((d, i) => d === winDigits[i]);
     if (allMatch) return { rank: 1, label: "1등", matchDigits: 6, groupMatch: true };
   }
 
-  // 2등~7등: 앞자리부터 일치 개수 (조 무관)
-  let matchFromFront = 0;
-  for (let i = 0; i < 6; i++) {
-    if (myDigits[i] === winDigits[i]) matchFromFront++;
+  // 끝자리부터 연속 일치 개수 (동행복권 공식 기준)
+  let matchFromEnd = 0;
+  for (let i = 5; i >= 0; i--) {
+    if (myDigits[i] === winDigits[i]) matchFromEnd++;
     else break;
   }
 
   // 2등: 6자리 일치 (조 불일치)
-  if (matchFromFront === 6) return { rank: 2, label: "2등", matchDigits: 6, groupMatch: false };
-  if (matchFromFront >= 5) return { rank: 3, label: "3등", matchDigits: 5 };
-  if (matchFromFront >= 4) return { rank: 4, label: "4등", matchDigits: 4 };
-  if (matchFromFront >= 3) return { rank: 5, label: "5등", matchDigits: 3 };
-  if (matchFromFront >= 2) return { rank: 6, label: "6등", matchDigits: 2 };
-  if (matchFromFront >= 1) return { rank: 7, label: "7등", matchDigits: 1 };
+  if (matchFromEnd === 6) return { rank: 2, label: "2등", matchDigits: 6, groupMatch: false };
+  if (matchFromEnd >= 5) return { rank: 3, label: "3등", matchDigits: 5 };
+  if (matchFromEnd >= 4) return { rank: 4, label: "4등", matchDigits: 4 };
+  if (matchFromEnd >= 3) return { rank: 5, label: "5등", matchDigits: 3 };
+  if (matchFromEnd >= 2) return { rank: 6, label: "6등", matchDigits: 2 };
+  if (matchFromEnd >= 1) return { rank: 7, label: "7등", matchDigits: 1 };
+
+  // 보너스: 별도 추첨번호 끝자리부터 6자리 일치
+  if (bonusDigits && bonusDigits.length === 6) {
+    let bonusMatch = 0;
+    for (let i = 5; i >= 0; i--) {
+      if (myDigits[i] === bonusDigits[i]) bonusMatch++;
+      else break;
+    }
+    if (bonusMatch === 6) return { rank: 8, label: "보너스", matchDigits: 6, bonus: true };
+  }
 
   return { rank: 0, label: "미당첨", matchDigits: 0 };
 }
@@ -192,10 +202,13 @@ function setupMyNumbersIpc(ipcMain) {
       // record = [round, date, group, d1, d2, d3, d4, d5, d6, bonus]
       const winGroup = record[2];
       const winDigits = [record[3], record[4], record[5], record[6], record[7], record[8]];
+      const bonusStr = record[9] || "";
+      const bonusDigits = bonusStr.length === 6 ? bonusStr.split("").map(Number) : null;
 
-      const result = checkPensionResult(entry.group, entry.digits, winGroup, winDigits);
+      const result = checkPensionResult(entry.group, entry.digits, winGroup, winDigits, bonusDigits);
       result.winGroup = winGroup;
       result.winDigits = winDigits;
+      result.bonusDigits = bonusDigits;
       result.drawDate = record[1];
 
       entry.result = result;
